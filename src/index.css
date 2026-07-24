@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap");
+@import "tailwindcss";
+
+
+/* ============ Base ============ */
+:root {
+  --font-kr: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-kr);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ============ Portfolio home tokens ============ */
+:root {
+  --pf-paper: #f1f0ec;
+  --pf-ink: #131313;
+  --pf-dim: rgba(19, 19, 19, 0.55);
+  --pf-line: rgba(19, 19, 19, 0.14);
+  --pf-orange: #ff4d00;
+}
+
+.pf-site {
+  background: var(--pf-paper);
+  color: var(--pf-ink);
+}
+
+.pf-display {
+  font-family: "Space Grotesk", var(--font-kr);
+  letter-spacing: -0.02em;
+}
+
+.pf-mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+/* ============ KONTAKT brand layer (ported as-is) ============ */
+:root {
+  --k-void: #17191c;
+  --k-bone: #f2efe9;
+  --k-muted: rgba(242, 239, 233, 0.64);
+  --k-accent: #ff4d00;
+  --k-line: rgba(242, 239, 233, 0.16);
+}
+
+.k-site {
+  background: var(--k-void);
+  color: var(--k-bone);
+  font-family: "Outfit", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.k-mono {
+  font-family: "IBM Plex Mono", monospace;
+}
