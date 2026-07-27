@@ -115,6 +115,7 @@ function CountUp({ to, suffix = "", duration = 1400 }: { to: number; suffix?: st
 function HeroScrub() {
   const { ref, progress } = useSectionProgress<HTMLDivElement>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const copyRef = useRef<HTMLDivElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const [ready, setReady] = useState(false);
   const reduced = useMemo(prefersReduced, []);
@@ -156,7 +157,13 @@ function HeroScrub() {
     const s = Math.min(cw / img.naturalWidth, ch / img.naturalHeight);
     const w = img.naturalWidth * s;
     const h = img.naturalHeight * s;
-    ctx.drawImage(img, (cw - w) / 2, ch - h - ch * 0.02, w, h);
+    let y = ch - h - ch * 0.02;
+    if (canvas.clientWidth < 740) {
+      // 모바일: 카피 아래 남는 공간의 세로 중앙에 배치
+      const copyH = (copyRef.current?.offsetHeight ?? 0) * dpr;
+      y = Math.min(y, copyH + Math.max(0, (ch - copyH - h) / 2));
+    }
+    ctx.drawImage(img, (cw - w) / 2, y, w, h);
   }, [progress]);
 
   useEffect(() => {
@@ -177,7 +184,7 @@ function HeroScrub() {
   return (
     <section className="kl-hero" ref={ref} aria-label="KLANG Pro 히어로">
       <div className="kl-hero-sticky">
-        <div className="kl-hero-copy" style={reduced ? undefined : copyStyle}>
+        <div className="kl-hero-copy" ref={copyRef} style={reduced ? undefined : copyStyle}>
           <p className="kl-hero-eyebrow">KLANG Pro</p>
           <h1 className="kl-hero-h1">
             소음은 지우고,
@@ -309,7 +316,12 @@ function CloserLook() {
                   <span className="kl-chip-plus" aria-hidden="true" />
                   {c.title}
                 </span>
-                <span className="kl-chip-body">{c.body}</span>
+                <span className="kl-chip-body">
+                  <span className="kl-chip-inner">
+                    {c.body}
+                    <img className="kl-chip-img" src={c.img} alt="" loading="lazy" />
+                  </span>
+                </span>
               </button>
             ))}
           </div>

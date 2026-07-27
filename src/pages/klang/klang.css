@@ -76,6 +76,12 @@
   position: relative;
   background: var(--kl-alt);
 }
+/* 모바일: 스크럽 구간을 짧게 해 이어폰이 스크롤에 더 빨리 반응 */
+@media (max-width: 739px) {
+  .kl-hero {
+    height: 200vh;
+  }
+}
 .kl-hero-sticky {
   position: sticky;
   top: 0;
@@ -311,8 +317,12 @@
 .kl-chip[aria-expanded="true"] .kl-chip-body {
   grid-template-rows: 1fr;
 }
-.kl-chip-body > p {
+.kl-chip-inner {
+  display: block;
   overflow: hidden;
+  min-height: 0;
+}
+.kl-chip-body p {
   margin: 0;
   max-width: 420px;
   font-size: 14.5px;
@@ -320,8 +330,11 @@
   font-weight: 400;
   color: var(--kl-dim);
 }
-.kl-chip[aria-expanded="true"] .kl-chip-body > p {
+.kl-chip[aria-expanded="true"] .kl-chip-body p {
   padding-top: 10px;
+}
+.kl-chip-img {
+  display: none;
 }
 .kl-chip-body b {
   color: var(--kl-ink);
@@ -346,6 +359,23 @@
 }
 .kl-viewer img.on {
   opacity: 1;
+}
+/* 모바일: 사이드 뷰어 대신 펼친 패널 안에 이미지를 인라인 표시 */
+@media (max-width: 899px) {
+  .kl-viewer {
+    display: none;
+  }
+  .kl-chip {
+    width: 100%;
+  }
+  .kl-chip-img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 18px;
+    margin-top: 14px;
+  }
 }
 
 /* ---- noise control (dark) ---- */
