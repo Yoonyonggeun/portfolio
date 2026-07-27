@@ -19,6 +19,18 @@ type Project = {
 
 const projects: Project[] = [
   {
+    no: "04",
+    name: "AURUM Calibre 04",
+    category: "기계식 크로노그래프",
+    year: "2026",
+    desc: "“1초를 쪼개는 기계.” 스크롤이 곧 시간이 되는 스켈레톤 워치 페이지. 프레임 스크럽 히어로, 3레이어 X-ray, 다이얼 캡션 핀.",
+    tags: ["frame scrub ×61", "3-layer x-ray", "AI stills ×9", "AI film ×1"],
+    image: "/assets/aurum/hero-lg.webp",
+    href: "/work/aurum",
+    accent: "#c9a86a",
+    dark: true,
+  },
+  {
     no: "03",
     name: "KLANG Pro",
     category: "무선 이어폰",
@@ -43,13 +55,14 @@ const projects: Project[] = [
   },
   {
     no: "01",
-    name: "UMBRA",
+    name: "UMBRA GLIDE 01",
     category: "러닝 슈즈",
     year: "2026",
-    desc: "SOP의 출발점이 된 첫 프로젝트. 회전·분해·조립 3필름 스크럽 상세페이지. 리마스터 후 공개 예정.",
-    tags: ["assembly scrub", "3D inspect", "coming soon"],
-    image: "",
-    accent: "#3d5a49",
+    desc: "SOP의 출발점이 된 첫 프로젝트. “8km에서 포기하는 신발”을 회전→분해→재조립 3막 스크럽 필름으로 해부하고, 드래그로 돌려보는 3D 인스펙터로 마무리.",
+    tags: ["frame scrub ×242", "3D inspect", "4-layer teardown", "AI stills ×5"],
+    image: "/assets/umbra/hi_exploded.webp",
+    href: "/work/umbra",
+    accent: "#7fe3c3",
     dark: true,
   },
 ];
@@ -152,7 +165,7 @@ export default function Home() {
         </p>
         <div className="pf-mono mt-10 flex flex-wrap gap-x-10 gap-y-3 text-sm">
           <span>
-            <b className="text-lg">3</b>&nbsp;films shipped
+            <b className="text-lg">4</b>&nbsp;films shipped
           </span>
           <span>
             <b className="text-lg">½</b>&nbsp;day per product
