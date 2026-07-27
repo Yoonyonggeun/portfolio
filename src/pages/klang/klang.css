@@ -268,11 +268,16 @@
   color: var(--kl-ink);
   display: flex;
   flex-direction: column;
-  transition: background 0.3s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.14s ease-out;
   max-width: 100%;
 }
 .kl-chip:hover {
   background: #ebebf0;
+}
+.kl-chip:active {
+  transform: scale(0.98);
 }
 .kl-chip-head {
   display: flex;
@@ -505,6 +510,11 @@
   color: var(--kl-dim);
   font-weight: 500;
   min-height: 3.2em;
+  /* 두 캡션을 같은 칸에 겹쳐 둔다. 높이는 둘 중 큰 쪽으로 잡혀 흔들리지 않는다. */
+  display: grid;
+}
+.kl-xray-cap > span {
+  grid-area: 1 / 1;
 }
 .kl-xray-cap b {
   color: var(--kl-ink);
@@ -599,7 +609,11 @@
   color: var(--kl-ink);
   transition:
     background 0.25s,
-    color 0.25s;
+    color 0.25s,
+    transform 0.14s ease-out;
+}
+.kl-tab:active {
+  transform: scale(0.97);
 }
 .kl-tab[aria-selected="true"] {
   background: var(--kl-ink);
@@ -632,6 +646,27 @@
   color: var(--kl-dim);
   font-weight: 500;
   max-width: 640px;
+  min-height: 3.2em;
+  /* 이미지 크로스페이드(450ms)의 중간을 지난 뒤 착지한다. */
+  animation: kl-desc-in 0.26s cubic-bezier(0.2, 0.6, 0.2, 1) 0.12s both;
+}
+@keyframes kl-desc-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes kl-desc-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .kl-tab-desc b {
   color: var(--kl-ink);
@@ -706,6 +741,10 @@
   .kl-pulse,
   .kl-scroll-hint {
     animation: none !important;
+  }
+  /* 이동만 걷어내고 페이드는 남긴다. 교체 사실 자체는 보여야 한다. */
+  .kl-tab-desc {
+    animation-name: kl-desc-fade;
   }
   .kl-hero {
     height: auto;

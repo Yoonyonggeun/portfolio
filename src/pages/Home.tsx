@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 /* 스튜디오 이름은 여기 한 곳만 바꾸면 전체에 반영됩니다. */
@@ -67,10 +68,49 @@ const projects: Project[] = [
   },
 ];
 
+/* 자식 .pf-rv를 한 번씩만 등장시킨다. umbra·klang과 같은 패턴. */
+function useReveal<T extends HTMLElement>(threshold = 0.2) {
+  const ref = useRef<T | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const targets = el.querySelectorAll<HTMLElement>(".pf-rv");
+    const revealAll = () => targets.forEach((n) => n.classList.add("pf-in"));
+
+    /* 관찰할 수 없으면 리빌을 포기하고 즉시 드러낸다. */
+    if (!("IntersectionObserver" in window)) {
+      revealAll();
+      return;
+    }
+
+    let io: IntersectionObserver;
+    try {
+      io = new IntersectionObserver(
+        (es) =>
+          es.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("pf-in");
+              io.unobserve(e.target);
+            }
+          }),
+        { threshold },
+      );
+      targets.forEach((n) => io.observe(n));
+    } catch {
+      revealAll();
+      return;
+    }
+
+    return () => io.disconnect();
+  }, [threshold]);
+  return ref;
+}
+
 function ProjectCard({ p }: { p: Project }) {
   const body = (
     <article
-      className="group grid gap-0 overflow-hidden rounded-2xl border border-[var(--pf-line)] bg-white transition-shadow duration-300 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] md:grid-cols-[1.15fr_1fr]"
+      className="group grid gap-0 overflow-hidden rounded-2xl border border-[var(--pf-line)] bg-white transition-shadow duration-[400ms] ease-out hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] md:grid-cols-[1.15fr_1fr]"
       style={{ background: p.dark ? "#17191c" : "#fff", color: p.dark ? "#f2efe9" : "var(--pf-ink)" }}
     >
       <div className="relative aspect-[16/10] overflow-hidden md:aspect-auto md:min-h-[340px]">
@@ -79,7 +119,7 @@ function ProjectCard({ p }: { p: Project }) {
             src={p.image}
             alt={p.name}
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.04]"
           />
         ) : (
           <div
@@ -117,7 +157,7 @@ function ProjectCard({ p }: { p: Project }) {
           ))}
           {p.href && (
             <span
-              className="pf-mono ml-auto text-sm font-bold transition-transform duration-200 group-hover:translate-x-1"
+              className="pf-mono ml-auto text-sm font-bold transition-transform duration-[400ms] ease-out group-hover:translate-x-1"
               style={{ color: p.accent === "#1d1d1f" && p.dark ? "#fff" : p.accent }}
             >
               보러 가기 →
@@ -129,15 +169,21 @@ function ProjectCard({ p }: { p: Project }) {
   );
 
   return p.href ? (
-    <Link to={p.href} className="block focus-visible:outline-2 focus-visible:outline-offset-4">
+    <Link
+      to={p.href}
+      className="pf-rv block focus-visible:outline-2 focus-visible:outline-offset-4"
+    >
       {body}
     </Link>
   ) : (
-    <div className="cursor-default opacity-80">{body}</div>
+    /* 흐리게 처리하는 대상은 카드 내부다. 래퍼의 opacity는 리빌이 쓴다. */
+    <div className="pf-rv cursor-default [&_article]:opacity-80">{body}</div>
   );
 }
 
 export default function Home() {
+  const cards = useReveal<HTMLElement>();
+
   return (
     <div className="pf-site min-h-dvh">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 pt-8">
@@ -151,19 +197,28 @@ export default function Home() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 md:pt-28">
-        <p className="pf-mono text-xs uppercase tracking-[0.25em] text-[var(--pf-dim)]">
+        <p className="pf-rise pf-mono text-xs uppercase tracking-[0.25em] text-[var(--pf-dim)]">
           AI product film · scroll-driven detail pages
         </p>
-        <h1 className="pf-display mt-5 max-w-3xl text-4xl font-bold leading-[1.12] md:text-6xl">
+        <h1
+          className="pf-rise pf-display mt-5 max-w-3xl text-4xl font-bold leading-[1.12] md:text-6xl"
+          style={{ ["--d" as string]: "0.06s" }}
+        >
           제품 하나를,
           <br />
           스크롤 한 편의 필름으로.
         </h1>
-        <p className="mt-6 max-w-xl text-base leading-relaxed text-[var(--pf-dim)] md:text-lg">
+        <p
+          className="pf-rise mt-6 max-w-xl text-base leading-relaxed text-[var(--pf-dim)] md:text-lg"
+          style={{ ["--d" as string]: "0.12s" }}
+        >
           촬영 없이 AI 생성 에셋만으로 히어로 필름·분해 컷·디테일 스틸을 만들고, 스크롤
           인터랙션으로 엮어 반나절 안에 배포하는 제품 상세페이지 스튜디오입니다.
         </p>
-        <div className="pf-mono mt-10 flex flex-wrap gap-x-10 gap-y-3 text-sm">
+        <div
+          className="pf-rise pf-mono mt-10 flex flex-wrap gap-x-10 gap-y-3 text-sm"
+          style={{ ["--d" as string]: "0.18s" }}
+        >
           <span>
             <b className="text-lg">4</b>&nbsp;films shipped
           </span>
@@ -176,7 +231,7 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-24">
+      <main ref={cards} className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-24">
         {projects.map((p) => (
           <ProjectCard key={p.no} p={p} />
         ))}

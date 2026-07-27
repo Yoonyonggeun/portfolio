@@ -277,11 +277,23 @@
   background: var(--au-gold);
   transform: scale(1.15);
 }
+/*
+ * 누름은 항상 안쪽으로. 버튼 자신은 translate(-50%,-50%)로 위치를 잡고 있어
+ * 스케일은 점에만 줄 수 있다. .on 규칙과 명시도가 같으므로 뒤에 와야 한다.
+ */
+.au-pin:active .au-pin-dot {
+  transform: scale(0.9);
+}
+.au-pin.on:active .au-pin-dot {
+  transform: scale(1.03);
+}
 .au-pin-card {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 4px);
-  transform: translateX(-50%) translateY(6px);
+  transform: translateX(-50%) translateY(6px) scale(0.96);
+  /* 카드는 핀에서 자란다 — 원점은 카드 아래 가운데, 즉 핀이 있는 자리다. */
+  transform-origin: 50% 100%;
   width: max-content;
   max-width: 230px;
   text-align: left;
@@ -308,15 +320,17 @@
 .au-pin.on .au-pin-card {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 /* 화면 가장자리 핀은 카드가 잘리지 않게 좌우 보정 */
 .au-pin:first-of-type .au-pin-card {
   left: 0;
-  transform: translateX(-20%) translateY(6px);
+  transform: translateX(-20%) translateY(6px) scale(0.96);
+  /* 카드가 오른쪽으로 밀린 만큼 원점도 핀 쪽으로 당긴다. */
+  transform-origin: 20% 100%;
 }
 .au-pin:first-of-type.on .au-pin-card {
-  transform: translateX(-20%) translateY(0);
+  transform: translateX(-20%) translateY(0) scale(1);
 }
 
 /* ---------- x-ray ---------- */
