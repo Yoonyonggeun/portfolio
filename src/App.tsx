@@ -17,7 +17,7 @@ const TITLES: Record<string, string> = {
   "/work/kontakt": "KONTAKT ONE — Pain-free 100km",
   "/work/aurum": "AURUM Calibre 04 — 1초를 쪼개는 기계",
   "/work/umbra": "UMBRA GLIDE 01 — Engineered in the dark",
-  "/work/jeongbon": "정본치과의원 — 상담실에서 듣게 될 말을, 오시기 전에",
+  "/work/jeongbon": "정본치과의원 — 치료 전에 비용과 기간을 먼저 드립니다",
 };
 
 const HOME_TITLE = "PRODUCT FILM — 부수지 않고, 속을 보여준다";
