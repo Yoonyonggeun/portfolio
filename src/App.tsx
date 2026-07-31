@@ -11,6 +11,7 @@ const KontaktPage = lazy(() => import("./pages/kontakt/KontaktPage"));
 const AurumPage = lazy(() => import("./pages/aurum/AurumPage"));
 const UmbraPage = lazy(() => import("./pages/umbra/UmbraPage"));
 const JeongbonPage = lazy(() => import("./pages/jeongbon/JeongbonPage"));
+const MeridianPage = lazy(() => import("./pages/meridian/MeridianPage"));
 
 const TITLES: Record<string, string> = {
   "/work/klang": "KLANG Pro — 소음은 지우고, 소리만 남기다",
@@ -18,6 +19,7 @@ const TITLES: Record<string, string> = {
   "/work/aurum": "AURUM Calibre 04 — 1초를 쪼개는 기계",
   "/work/umbra": "UMBRA GLIDE 01 — Engineered in the dark",
   "/work/jeongbon": "정본치과의원 — 치료 전에 비용과 기간을 먼저 드립니다",
+  "/work/meridian": "MERIDIAN FLUID — Series FK-9 flow control",
 };
 
 const HOME_TITLE = "PRODUCT FILM — 부수지 않고, 속을 보여준다";
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="/work/aurum" element={<AurumPage />} />
           <Route path="/work/umbra" element={<UmbraPage />} />
           <Route path="/work/jeongbon" element={<JeongbonPage />} />
+          <Route path="/work/meridian" element={<MeridianPage />} />
         </Routes>
       </Suspense>
     </>

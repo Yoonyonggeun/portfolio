@@ -23,6 +23,19 @@ type Project = {
 
 const projects: Project[] = [
   {
+    no: "06",
+    name: "MERIDIAN FLUID",
+    category: "산업 부품 · 수출 B2B",
+    year: "2026",
+    line: "바이어가 묻기 전에 수치를 놓는다.",
+    desc: "PDF 카탈로그를 대신하는 영문·국문 데이터시트 사이트. 구경과 압력등급을 고르면 사양표와 압력강하 곡선이 함께 바뀐다.",
+    tags: ["EN · KO", "live datasheet", "SVG curve"],
+    image: "/assets/meridian/hero-valve.webp",
+    href: "/work/meridian",
+    accent: "#8b9a3f",
+    dark: true,
+  },
+  {
     no: "05",
     name: "정본치과의원",
     category: "치과 · 의료",
@@ -273,7 +286,7 @@ export default function Home() {
             style={{ ["--d" as string]: "0.24s" }}
           >
             {[
-              ["5", "프로젝트"],
+              ["6", "프로젝트"],
               ["40", "구조 스틸"],
               ["610", "스크럽 프레임"],
               ["0", "촬영 컷"],
