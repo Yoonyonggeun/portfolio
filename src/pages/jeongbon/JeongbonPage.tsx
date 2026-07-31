@@ -69,32 +69,27 @@ const EDIT_RULES = [
   "이 문서에는 인물 사진이 없습니다. 누가 무엇을 맡는지는 06에 적혀 있습니다.",
 ];
 
-function Colophon({ halted }: { halted: boolean }) {
+function Colophon() {
   const ref = useReveal<HTMLElement>();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  /* 06 제3조는 이 페이지에도 적용된다 — 멈추면 필름도 선다. */
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (halted) v.pause();
-  }, [halted]);
 
   return (
     <header className="jb-sec jb-cover" ref={ref}>
-      <div className="jb-film">
-        {/* 영상 위에 글자를 한 자도 얹지 않는다 — 국내 표준의 정반대 */}
-        <video
-          ref={videoRef}
-          src={`${A}/hero.mp4`}
-          poster={`${A}/hero-lg.webp`}
-          autoPlay
-          muted
-          playsInline
-          preload="metadata"
+      {/*
+       * 도판 위에 글자를 한 자도 얹지 않는다 — 국내 치과 표준의 정반대.
+       * 도판 번호도 띠 위가 아니라 지면이 시작되는 첫 줄에 조판한다.
+       */}
+      <figure className="jb-film">
+        <img
+          src={`${A}/hero-lg.webp`}
+          srcSet={`${A}/hero-mobile.webp 900w, ${A}/hero-lg.webp 1800w`}
+          sizes="100vw"
+          alt="상악과 하악 석고 모형이 맞물리기 직전, 두 치열 사이가 벌어져 있다"
+          width={1800}
+          height={1005}
+          fetchPriority="high"
         />
-        <p className="jb-film-meta jb-mono">JB-2026-04 · FIG.0</p>
-      </div>
+      </figure>
+      <p className="jb-film-meta jb-mono">도판 0 — 교합 · 상하악 석고 모형</p>
 
       <div className="jb-grid jb-cover-grid">
         <div className="jb-aside jb-mono">
@@ -1813,7 +1808,7 @@ export default function JeongbonPage() {
         </button>
       </div>
 
-      <Colophon halted={halted} />
+      <Colophon />
       <FeeSheet />
       <WatchList />
       <TimeSection halted={halted} onMarks={setMarks} />

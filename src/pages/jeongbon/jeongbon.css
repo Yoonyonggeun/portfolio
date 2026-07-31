@@ -319,28 +319,31 @@
   border-top: 0;
 }
 .jb-film {
-  position: relative;
+  margin: 0;
   height: 62vh;
   min-height: 320px;
   background: var(--jb-box);
   overflow: hidden;
 }
-.jb-film video,
 .jb-film img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-/* 영상 위에 글자를 한 자도 얹지 않는다 */
+/*
+ * 도판 번호는 띠 위가 아니라 지면의 첫 줄이다. 얹으면 이 문서가 스스로
+ * 선언한 규칙("도판 위에 글자를 얹지 않는다")을 어기게 된다.
+ */
 .jb-film-meta {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  padding: 7px 12px;
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  color: color-mix(in srgb, var(--jb-box-ink) 55%, transparent);
+  margin: 0;
+  padding: 9px var(--jb-pad);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--jb-margin);
+  border-bottom: 1px solid var(--jb-rule);
+  max-width: 1180px;
+  margin-inline: auto;
 }
 
 .jb-cover-grid {
