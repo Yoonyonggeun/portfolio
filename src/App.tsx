@@ -10,12 +10,14 @@ const KlangPage = lazy(() => import("./pages/klang/KlangPage"));
 const KontaktPage = lazy(() => import("./pages/kontakt/KontaktPage"));
 const AurumPage = lazy(() => import("./pages/aurum/AurumPage"));
 const UmbraPage = lazy(() => import("./pages/umbra/UmbraPage"));
+const JeongbonPage = lazy(() => import("./pages/jeongbon/JeongbonPage"));
 
 const TITLES: Record<string, string> = {
   "/work/klang": "KLANG Pro — 소음은 지우고, 소리만 남기다",
   "/work/kontakt": "KONTAKT ONE — Pain-free 100km",
   "/work/aurum": "AURUM Calibre 04 — 1초를 쪼개는 기계",
   "/work/umbra": "UMBRA GLIDE 01 — Engineered in the dark",
+  "/work/jeongbon": "정본치과의원 — 상담실에서 듣게 될 말을, 오시기 전에",
 };
 
 const HOME_TITLE = "PRODUCT FILM — 부수지 않고, 속을 보여준다";
@@ -45,6 +47,7 @@ export default function App() {
           <Route path="/work/kontakt" element={<KontaktPage />} />
           <Route path="/work/aurum" element={<AurumPage />} />
           <Route path="/work/umbra" element={<UmbraPage />} />
+          <Route path="/work/jeongbon" element={<JeongbonPage />} />
         </Routes>
       </Suspense>
     </>

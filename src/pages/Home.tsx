@@ -23,6 +23,18 @@ type Project = {
 
 const projects: Project[] = [
   {
+    no: "05",
+    name: "정본치과의원",
+    category: "치과 · 의료",
+    year: "2026",
+    line: "상담실에서 들을 말을 미리 조판한다.",
+    desc: "광고가 아니라 발간된 문서로 작동하는 치과 페이지. 조작하면 견적서가 눈앞에서 다시 짜인다.",
+    tags: ["typeset on input", "hold scrub", "print as output"],
+    image: "/assets/jeongbon/hero-lg.webp",
+    href: "/work/jeongbon",
+    accent: "#b4402e",
+  },
+  {
     no: "04",
     name: "AURUM Calibre 04",
     category: "기계식 크로노그래프",
@@ -261,8 +273,8 @@ export default function Home() {
             style={{ ["--d" as string]: "0.24s" }}
           >
             {[
-              ["4", "제품 필름"],
-              ["32", "구조 스틸"],
+              ["5", "프로젝트"],
+              ["40", "구조 스틸"],
               ["610", "스크럽 프레임"],
               ["0", "촬영 컷"],
             ].map(([v, k]) => (
@@ -304,14 +316,14 @@ export default function Home() {
             <div className="pf-rv max-w-2xl">
               <p className="pf-label text-xs text-[var(--pf-dim)]">작업물</p>
               <h2 className="pf-display mt-4 text-[clamp(1.8rem,4vw,3rem)] font-bold leading-[1.14]">
-                네 개의 제품.
+                다섯 개의 대상.
                 <br />
-                네 가지 절개.
+                다섯 가지 방법.
               </h2>
               {/* 컨셉 작업이라는 사실은 숨기지 않되 사과하지 않는다. 의도로 말한다. */}
               <p className="mt-5 text-[15px] leading-relaxed text-[var(--pf-dim)]">
-                모두 자체 기획 프로젝트입니다. 카테고리마다 속을 보여주는 방법이 다르다는 걸
-                확인하려고 만들었습니다.
+                모두 자체 기획 프로젝트입니다. 네 개는 제품, 하나는 의료 서비스입니다. 대상이
+                바뀌면 속을 보여주는 방법도 바뀐다는 걸 확인하려고 만들었습니다.
               </p>
             </div>
 

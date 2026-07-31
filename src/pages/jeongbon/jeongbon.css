@@ -1,0 +1,1736 @@
+/*
+ * 정본치과의원 正本 — 발간된 문서로 작동하는 치과 페이지
+ *
+ * 편집 규칙 (이 파일을 고칠 때 지킬 것)
+ *  1. 이징은 아래 토큰 5개만 쓴다. cubic-bezier( 를 여기 말고 다른 데 쓰면 실패다.
+ *  2. duration은 전부 calc(var(--jb-m) * Ns). --jb-m 하나로 reduced-motion과
+ *     06의 [멈춤] 버튼이 같은 스위치를 공유한다. JS 분기가 필요 없다.
+ *  3. 구획은 괘선과 여백으로만 한다. border-radius · box-shadow · gradient 0개.
+ *  4. 주묵(--jb-seal)은 선과 점으로만. 배경으로 칠하지 않는다.
+ *  5. 모든 셀렉터는 .jb-site 하위로 스코프한다 (klang.css의 전역 .rv와 충돌).
+ */
+
+.jb-site {
+  /* ── 지면 ── */
+  --jb-page: #ede9e1;
+  --jb-sheet: #f6f3ed;
+  --jb-rule: #d9d3c6;
+  --jb-ink: #1c1a17;
+  --jb-margin: #6e6759;
+  --jb-seal: #b4402e;
+  --jb-box: #121110;
+  --jb-box-ink: #e4e0d8;
+  --jb-outline: var(--jb-seal);
+
+  /* ── 이징 ── */
+  --jb-e-doc: cubic-bezier(0.2, 0.7, 0.15, 1);
+  --jb-e-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --jb-e-halt: cubic-bezier(0.6, 0.04, 0.98, 0.34);
+  --jb-e-optic: cubic-bezier(0.16, 1, 0.3, 1);
+  --jb-e-spring: cubic-bezier(0.2, 1.7, 0.35, 1);
+
+  /* ── 모션 계수. 0이면 전부 즉시 ── */
+  --jb-m: 1;
+
+  /* ── 판면 ── */
+  --jb-aside: 172px;
+  --jb-gap: 34px;
+  --jb-pad: clamp(20px, 4vw, 56px);
+
+  /* ── 04 판독대 광학 계수 ── */
+  --jb-k-scale: 0.16;
+  --jb-k-blur: 7px;
+
+  background: var(--jb-page);
+  color: var(--jb-ink);
+  font-family: var(--font-kr);
+  font-size: 1rem;
+  line-height: 1.85;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  /* 한글은 어절 단위로 끊는다. 이게 없으면 '드/립니다'가 나온다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jb-site {
+    --jb-m: 0;
+    --jb-k-scale: 0;
+    --jb-k-blur: 0px;
+  }
+}
+
+/* 06 제3조를 페이지가 자기 자신에게 집행한다 */
+:root[data-jb-halt="1"] .jb-site {
+  --jb-m: 0;
+  --jb-k-scale: 0;
+  --jb-k-blur: 0px;
+}
+:root[data-jb-halt="1"] .jb-site * {
+  animation-play-state: paused !important;
+}
+
+/* 발행 판형 — 본문 17 / 20 */
+:root[data-jb-type="17"] {
+  font-size: 17px;
+}
+:root[data-jb-type="20"] {
+  font-size: 20px;
+}
+
+.jb-site ::selection {
+  background: var(--jb-ink);
+  color: var(--jb-page);
+}
+.jb-site :focus-visible {
+  outline: 2px solid var(--jb-outline);
+  outline-offset: 3px;
+}
+
+/* ── 서체 역할 ────────────────────────────────────────────── */
+/* 명조는 표제·인용에만. 40px 이상에서만 300을 쓴다(획이 끊긴다). */
+.jb-serif {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+}
+/*
+ * Plex Mono에는 한글 글리프가 없다. 폴백에 한글을 끼우지 않으면
+ * '견 적  문 의'처럼 칸이 벌어진다 — index.css:46의 함정과 같다.
+ */
+.jb-mono {
+  font-family: "IBM Plex Mono", var(--font-kr), monospace;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ── 리빌 ─────────────────────────────────────────────────── */
+.jb-site .rv {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity calc(var(--jb-m) * 0.6s) var(--jb-e-out) var(--d, 0s),
+    transform calc(var(--jb-m) * 0.6s) var(--jb-e-out) var(--d, 0s);
+}
+.jb-site .rv.in,
+.jb-site .in .rv {
+  opacity: 1;
+  transform: none;
+}
+/* --jb-m:0이면 transition이 0s라 최종 상태로 즉시 간다 */
+.jb-site .rv:not(.in) {
+  transition-duration: calc(var(--jb-m) * 0.6s);
+}
+
+/* 잉크가 찍히는 방향 — 좌에서 우로. fade-up과 물리가 다르다. */
+.jb-site .ink-in {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path calc(var(--jb-m) * 0.6s) var(--jb-e-out)
+    calc(var(--i, 0) * 42ms);
+}
+.jb-site .in .ink-in,
+.jb-site .ink-in.in {
+  clip-path: inset(0 0 0 0);
+}
+
+/* ── 판면 그리드 : 방주 + 본문 (12컬럼 대칭이 아니다) ────────── */
+.jb-grid {
+  display: grid;
+  grid-template-columns: var(--jb-aside) minmax(0, 1fr);
+  column-gap: var(--jb-gap);
+  padding-inline: var(--jb-pad);
+  max-width: 1180px;
+  margin-inline: auto;
+}
+.jb-aside {
+  grid-column: 1;
+  color: var(--jb-margin);
+  font-size: 0.68rem;
+  line-height: 1.7;
+}
+.jb-body {
+  grid-column: 2;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .jb-grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 18px;
+  }
+  .jb-aside,
+  .jb-body {
+    grid-column: 1;
+  }
+  .jb-aside {
+    order: 2;
+    border-top: 1px solid var(--jb-rule);
+    padding-top: 12px;
+  }
+  .jb-body {
+    order: 1;
+  }
+}
+
+/* ── 표제 ─────────────────────────────────────────────────── */
+/* 역위계: 히어로 h1이 섹션 h2보다 작다. 표지 제목이지 광고 헤드라인이 아니다. */
+.jb-h2 {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.jb-sub {
+  margin: 0.9rem 0 0;
+  color: var(--jb-margin);
+  font-size: 0.94rem;
+}
+.jb-sec {
+  padding-block: clamp(84px, 11vw, 148px);
+  border-top: 1px solid var(--jb-rule);
+}
+.jb-secno {
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  color: var(--jb-margin);
+  margin: 0 0 1.4rem;
+}
+
+/* ── 상단 고정 스트립 ─────────────────────────────────────── */
+.jb-strip-fixed {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  font-size: 0.66rem;
+  background: color-mix(in srgb, var(--jb-page) 88%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border-left: 1px solid var(--jb-rule);
+  border-bottom: 1px solid var(--jb-rule);
+}
+.jb-strip-fixed > * {
+  border-left: 1px solid var(--jb-rule);
+}
+.jb-strip-fixed > *:first-child {
+  border-left: 0;
+}
+.jb-tool {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--jb-margin);
+  font: inherit;
+  padding: 9px 13px;
+  cursor: pointer;
+  transition: color calc(var(--jb-m) * 0.18s) var(--jb-e-doc);
+  white-space: nowrap;
+}
+.jb-tool:hover {
+  color: var(--jb-ink);
+}
+.jb-tool[aria-pressed="true"] {
+  color: var(--jb-seal);
+}
+.jb-tool-seg {
+  display: inline-flex;
+  gap: 6px;
+}
+.jb-tool-seg b {
+  font-weight: 400;
+  opacity: 0.4;
+}
+.jb-tool-seg b.on {
+  opacity: 1;
+  color: var(--jb-ink);
+}
+
+/* 홈으로 — 판권 항목처럼 조판한다 */
+.jb-back {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  padding: 9px 14px;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  color: var(--jb-margin);
+  text-decoration: none;
+  background: color-mix(in srgb, var(--jb-page) 88%, transparent);
+  border-right: 1px solid var(--jb-rule);
+  border-bottom: 1px solid var(--jb-rule);
+}
+.jb-back:hover {
+  color: var(--jb-ink);
+}
+
+/* ── 판면 오버레이 (◱) ────────────────────────────────────── */
+/*
+ * 크롭마크를 장식으로 두지 않고 그리드 오버레이와 같은 레이어에 묶는다.
+ * 프로덕션에 남은 교정 도구 — 사람이 판면을 짰다는 가장 값싼 증명이다.
+ */
+.jb-site.show-grid .jb-grid {
+  position: relative;
+}
+.jb-site.show-grid .jb-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0 var(--jb-pad);
+  pointer-events: none;
+  z-index: 1;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--jb-seal) 12%, transparent) 0 var(--jb-aside),
+      transparent var(--jb-aside)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(100% / 8 - 1px),
+      color-mix(in srgb, var(--jb-seal) 22%, transparent) calc(100% / 8 - 1px)
+        calc(100% / 8)
+    );
+}
+.jb-site.show-grid .jb-sec {
+  position: relative;
+}
+.jb-site.show-grid .jb-sec::before,
+.jb-site.show-grid .jb-sec::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 0;
+  border-top: 1px solid color-mix(in srgb, var(--jb-seal) 45%, transparent);
+  pointer-events: none;
+}
+.jb-site.show-grid .jb-sec::before {
+  top: 10px;
+}
+.jb-site.show-grid .jb-sec::after {
+  bottom: 10px;
+}
+
+/* ── 00 표지 ──────────────────────────────────────────────── */
+.jb-cover {
+  padding-top: 0;
+  border-top: 0;
+}
+.jb-film {
+  position: relative;
+  height: 62vh;
+  min-height: 320px;
+  background: var(--jb-box);
+  overflow: hidden;
+}
+.jb-film video,
+.jb-film img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* 영상 위에 글자를 한 자도 얹지 않는다 */
+.jb-film-meta {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 7px 12px;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--jb-box-ink) 55%, transparent);
+}
+
+.jb-cover-grid {
+  padding-top: clamp(48px, 7vw, 88px);
+  padding-bottom: clamp(64px, 9vw, 120px);
+}
+.jb-h1 {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  margin: 0;
+  max-width: 26ch;
+}
+.jb-def {
+  margin: 2.6rem 0 0;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--jb-rule);
+  max-width: 44ch;
+  font-size: 0.9rem;
+}
+.jb-def b {
+  font-weight: 500;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+}
+.jb-def i {
+  font-style: normal;
+  color: var(--jb-margin);
+  font-size: 0.78rem;
+  margin-inline: 0.4em;
+}
+
+/* 편집 규칙 — 이 문서가 무엇을 싣지 않는지 */
+.jb-rules {
+  list-style: none;
+  margin: 2.4rem 0 0;
+  padding: 0;
+  max-width: 52ch;
+}
+.jb-rules li {
+  padding: 0.62rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+  font-size: 0.87rem;
+  color: var(--jb-ink);
+}
+.jb-rules li:first-child {
+  border-top: 1px solid var(--jb-rule);
+}
+
+/* 목차 — 프리로더 대신 이것이 첫 정보다 */
+.jb-toc {
+  list-style: none;
+  margin: 2.8rem 0 0;
+  padding: 0;
+  counter-reset: none;
+}
+.jb-toc a {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: border-color calc(var(--jb-m) * 0.12s) var(--jb-e-doc);
+}
+.jb-toc a:hover,
+.jb-toc a:focus-visible {
+  border-bottom-color: var(--jb-seal);
+}
+.jb-toc-no {
+  color: var(--jb-margin);
+  font-size: 0.72rem;
+  width: 2.4em;
+  flex: none;
+  transition: color calc(var(--jb-m) * 0.12s) var(--jb-e-doc);
+}
+.jb-toc a:hover .jb-toc-no {
+  color: var(--jb-seal);
+}
+.jb-toc-name {
+  flex: none;
+}
+.jb-leader {
+  flex: 1 1 auto;
+  align-self: center;
+  height: 1px;
+  min-width: 18px;
+  background-image: radial-gradient(
+    circle,
+    var(--jb-rule) 0.6px,
+    transparent 0.7px
+  );
+  background-size: 4px 1px;
+  background-repeat: repeat-x;
+}
+.jb-toc-min {
+  color: var(--jb-margin);
+  font-size: 0.7rem;
+  flex: none;
+}
+
+.jb-note {
+  margin-top: 2.6rem;
+  color: var(--jb-margin);
+  font-size: 0.72rem;
+  max-width: 60ch;
+}
+
+/* ── 01 진료비 정본 ───────────────────────────────────────── */
+.jb-axes {
+  margin-top: 2.6rem;
+  border-top: 1px solid var(--jb-rule);
+}
+.jb-axis {
+  display: grid;
+  grid-template-columns: 5.6em minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 0.62rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+}
+.jb-axis-label {
+  font-size: 0.68rem;
+  color: var(--jb-margin);
+  letter-spacing: 0.1em;
+}
+.jb-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.jb-chip {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 2px 2px 3px;
+  margin: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--jb-margin);
+  cursor: pointer;
+  transition:
+    color calc(var(--jb-m) * 0.18s) var(--jb-e-doc),
+    border-color calc(var(--jb-m) * 0.18s) var(--jb-e-doc),
+    transform calc(var(--jb-m) * 0.22s) var(--jb-e-spring);
+}
+.jb-chip:hover {
+  color: var(--jb-ink);
+}
+.jb-chip[aria-checked="true"] {
+  color: var(--jb-ink);
+  border-bottom-color: var(--jb-seal);
+  transform: translateY(-1px);
+}
+.jb-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.jb-count input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  height: 18px;
+  width: min(220px, 100%);
+  cursor: pointer;
+}
+.jb-count input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--jb-rule);
+}
+.jb-count input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: var(--jb-rule);
+}
+.jb-count input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 3px;
+  height: 15px;
+  margin-top: -7px;
+  background: var(--jb-seal);
+  border: 0;
+  border-radius: 0;
+}
+.jb-count input[type="range"]::-moz-range-thumb {
+  width: 3px;
+  height: 15px;
+  background: var(--jb-seal);
+  border: 0;
+  border-radius: 0;
+}
+.jb-count-val {
+  font-size: 0.82rem;
+  min-width: 3.4em;
+}
+
+/* 시트 — 지면 위의 종이. 그림자 없이 명도차와 괘선으로만 뜬다. */
+.jb-sheet {
+  margin-top: 2.4rem;
+  background: var(--jb-sheet);
+  border: 1px solid var(--jb-rule);
+  padding: clamp(20px, 3.4vw, 40px);
+}
+.jb-sheet-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 0.9rem;
+  border-bottom: 1.5px solid var(--jb-ink);
+  font-size: 0.72rem;
+  color: var(--jb-margin);
+}
+.jb-sheet-head b {
+  font-weight: 500;
+  color: var(--jb-ink);
+  font-size: 0.86rem;
+}
+.jb-law {
+  margin: 1.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--jb-ink);
+}
+.jb-law span {
+  color: var(--jb-margin);
+}
+
+.jb-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.4rem;
+  font-size: 0.86rem;
+}
+.jb-table caption {
+  text-align: left;
+  font-size: 0.7rem;
+  color: var(--jb-margin);
+  padding-bottom: 0.6rem;
+}
+.jb-table th {
+  font-weight: 400;
+  font-size: 0.68rem;
+  color: var(--jb-margin);
+  text-align: left;
+  padding: 0.4rem 0.5rem 0.4rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+  letter-spacing: 0.08em;
+}
+.jb-table th.num,
+.jb-table td.num {
+  text-align: right;
+  padding-right: 0;
+  padding-left: 26px;
+  white-space: nowrap;
+}
+.jb-table td {
+  padding: 0.72rem 0.5rem 0.72rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+  vertical-align: top;
+}
+.jb-table tbody tr:last-child td {
+  border-bottom: 1px solid var(--jb-rule);
+}
+.jb-row-open {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0 8px 0 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--jb-margin);
+  cursor: pointer;
+  transition: color calc(var(--jb-m) * 0.18s) var(--jb-e-doc);
+}
+.jb-row-open:hover,
+.jb-row-open[aria-expanded="true"] {
+  color: var(--jb-seal);
+}
+.jb-item-name {
+  display: inline-block;
+}
+.jb-item-spec {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--jb-margin);
+  margin-top: 2px;
+}
+
+/* 심평원 참고 축 — 우리 가격 마커는 찍지 않는다 (비교광고가 된다) */
+.jb-hira {
+  position: relative;
+  height: 2px;
+  margin-top: 9px;
+  background: var(--jb-rule);
+  max-width: 260px;
+}
+.jb-hira-range {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--jb-margin) 42%, transparent);
+  left: var(--lo);
+  width: var(--w);
+  transition:
+    left calc(var(--jb-m) * 0.42s) var(--jb-e-doc),
+    width calc(var(--jb-m) * 0.42s) var(--jb-e-doc);
+}
+.jb-hira-avg {
+  position: absolute;
+  top: -3px;
+  height: 8px;
+  border-left: 1px dashed var(--jb-margin);
+  left: var(--avg);
+  transition: left calc(var(--jb-m) * 0.42s) var(--jb-e-doc);
+}
+.jb-hira-cap {
+  font-size: 0.62rem;
+  color: var(--jb-margin);
+  margin-top: 5px;
+}
+
+/* 부품표 — grid-template-rows 0fr→1fr. scrollHeight 측정 없음. */
+.jb-part {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows calc(var(--jb-m) * 0.42s) var(--jb-e-doc);
+}
+.jb-part.open {
+  grid-template-rows: 1fr;
+}
+.jb-part > div {
+  overflow: hidden;
+  min-height: 0;
+}
+.jb-part-inner {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 18px;
+  padding: 0.9rem 0 0.2rem;
+  font-size: 0.78rem;
+  color: var(--jb-margin);
+}
+.jb-part-inner img {
+  width: 100%;
+  height: auto;
+  display: block;
+  mix-blend-mode: multiply;
+}
+.jb-part-inner dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 7.2em minmax(0, 1fr);
+  row-gap: 4px;
+}
+.jb-part-inner dt {
+  color: var(--jb-margin);
+}
+.jb-part-inner dd {
+  margin: 0;
+  color: var(--jb-ink);
+}
+
+/* 합계 — 자릿수 롤. rAF도 setInterval도 없다. */
+.jb-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1.5px solid var(--jb-ink);
+}
+.jb-total-label {
+  font-size: 0.74rem;
+  color: var(--jb-margin);
+}
+.jb-total-num {
+  font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+.jb-digit {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: baseline;
+}
+.jb-digit-strip {
+  display: block;
+  transform: translateY(calc(var(--n) * -1em));
+  transition: transform calc(var(--jb-m) * 0.5s) var(--jb-e-doc);
+  transition-delay: calc(var(--i) * 26ms);
+}
+.jb-digit-strip span {
+  display: block;
+  height: 1em;
+  line-height: 1;
+}
+.jb-won {
+  font-size: 0.5em;
+  margin-left: 0.25em;
+}
+.jb-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.jb-fee-foot {
+  margin-top: 1.6rem;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.jb-fee-foot b {
+  font-weight: 500;
+}
+.jb-fee-foot span {
+  color: var(--jb-margin);
+  font-size: 0.76rem;
+}
+
+/* ── 02 관찰 기준 ─────────────────────────────────────────── */
+/* 이 섹션만 지면 폭 전체를 쓰고, 모션이 없다. */
+.jb-watch {
+  --jb-aside: 148px;
+}
+.jb-watch .jb-grid {
+  max-width: 1420px;
+}
+.jb-judge {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2.4rem;
+  font-size: 0.9rem;
+  text-align: left;
+}
+.jb-judge th {
+  font-weight: 400;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: var(--jb-margin);
+  padding: 0 0 0.5rem;
+  border-bottom: 1px solid var(--jb-ink);
+}
+.jb-judge td {
+  padding: 0.95rem 18px 0.95rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+  border-top: 1px solid transparent;
+  vertical-align: top;
+  transition: border-color calc(var(--jb-m) * 0.12s) var(--jb-e-doc);
+}
+.jb-judge tr:hover td,
+.jb-judge tr:focus-within td {
+  border-bottom-color: var(--jb-seal);
+  border-top-color: var(--jb-seal);
+}
+.jb-judge tr:hover .jb-judge-why,
+.jb-judge tr:focus-within .jb-judge-why {
+  opacity: 1;
+}
+.jb-judge-why {
+  color: var(--jb-margin);
+  font-size: 0.72rem;
+  opacity: 0.55;
+  transition: opacity calc(var(--jb-m) * 0.12s) var(--jb-e-doc);
+}
+.jb-verdict {
+  white-space: nowrap;
+}
+.jb-verdict.act::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: var(--jb-seal);
+  margin-right: 7px;
+  vertical-align: 0.15em;
+}
+
+/* ── 03 시간 ──────────────────────────────────────────────── */
+.jb-hold {
+  margin-top: 2.2rem;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: ew-resize;
+}
+.jb-hold-scale {
+  display: flex;
+  border-bottom: 1px solid var(--jb-rule);
+  margin-bottom: 3px;
+}
+.jb-tick {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--jb-rule);
+  padding: 0 0 3px 4px;
+  font: inherit;
+  font-size: 0.6rem;
+  color: var(--jb-margin);
+  cursor: pointer;
+  text-align: left;
+  transition: color calc(var(--jb-m) * 0.18s) var(--jb-e-doc);
+}
+.jb-tick:hover {
+  color: var(--jb-seal);
+}
+.jb-strip {
+  position: relative;
+  display: flex;
+  height: clamp(120px, 22vh, 190px);
+  border: 1px solid var(--jb-rule);
+  border-top: 0;
+  overflow: hidden;
+}
+/*
+ * flex-basis를 0으로 눌러야 폭이 실제 소요 분에 비례한다. auto로 두면
+ * 글자 길이가 폭을 정해 버려서 모든 구간이 같아 보인다 — 균질 그리드를
+ * 깨는 것이 이 섹션의 논지이므로 여기서 물러서면 안 된다.
+ */
+.jb-seg-block,
+.jb-hold-scale .jb-tick {
+  flex-basis: 0;
+}
+.jb-seg-block {
+  position: relative;
+  border-left: 1px solid var(--jb-rule);
+  padding: 10px 9px;
+  min-width: 0;
+  overflow: hidden;
+}
+.jb-seg-block:first-child {
+  border-left: 0;
+}
+.jb-seg-block b {
+  display: block;
+  font-weight: 400;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.jb-seg-block i {
+  display: block;
+  font-style: normal;
+  font-size: 0.62rem;
+  color: var(--jb-margin);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+/* 지나간 구간만 잉크가 진해진다 */
+.jb-seg-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--jb-page) 62%, transparent);
+  opacity: calc(1 - clamp(0, (var(--t) - var(--s0)) / var(--sd), 1));
+  pointer-events: none;
+}
+/* 시간 커서 */
+.jb-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--jb-seal);
+  left: calc(var(--t) * 100%);
+  pointer-events: none;
+}
+/* 손을 뗀 자리 — 지워지지 않고 인쇄에도 찍힌다 */
+.jb-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--jb-ink);
+  opacity: 0.4;
+  left: calc(var(--m) * 100%);
+  pointer-events: none;
+}
+.jb-hold-read {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+  font-size: 0.72rem;
+  color: var(--jb-margin);
+}
+.jb-hold-time {
+  font-size: 1.15rem;
+  color: var(--jb-ink);
+}
+
+/* 주 단위 트랙 */
+.jb-weeks {
+  margin-top: 3.4rem;
+}
+.jb-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  margin-top: 1rem;
+  touch-action: pan-y;
+}
+.jb-slit {
+  width: 6px;
+  height: 34px;
+  flex: none;
+  background: var(--jb-rule);
+  transition: background calc(var(--jb-m) * 0.28s) var(--jb-e-doc);
+}
+.jb-slit.visit {
+  background: var(--jb-ink);
+}
+.jb-slit.rest {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--jb-rule) 0 1px,
+    transparent 1px 4px
+  );
+  background-color: transparent;
+  border: 1px solid var(--jb-rule);
+  border-top: 0;
+  border-bottom: 0;
+  cursor: pointer;
+}
+.jb-handle {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-left: 2px solid var(--jb-seal);
+  padding: 0 0 0 6px;
+  margin-right: 6px;
+  height: 34px;
+  font: inherit;
+  font-size: 0.62rem;
+  color: var(--jb-margin);
+  cursor: ew-resize;
+  touch-action: none;
+  white-space: nowrap;
+  text-align: left;
+}
+.jb-visits {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.7rem 22px;
+  font-size: 0.78rem;
+}
+.jb-visits li {
+  border-top: 1px solid var(--jb-rule);
+  padding-top: 0.42rem;
+}
+.jb-visits b {
+  font-weight: 400;
+  display: block;
+}
+.jb-visits i {
+  font-style: normal;
+  color: var(--jb-margin);
+  font-size: 0.68rem;
+}
+.jb-visits .adj {
+  color: var(--jb-seal);
+}
+/* 골융합 도해 */
+.jb-osseo {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows calc(var(--jb-m) * 0.5s) var(--jb-e-doc);
+}
+.jb-osseo.open {
+  grid-template-rows: 1fr;
+}
+.jb-osseo > div {
+  overflow: hidden;
+  min-height: 0;
+}
+.jb-osseo svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 1.2rem;
+}
+.jb-osseo line {
+  stroke: var(--jb-ink);
+  stroke-width: 0.7;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(var(--a0));
+  transition: transform calc(var(--jb-m) * 1.1s) var(--jb-e-doc);
+  transition-delay: calc(var(--i) * 4ms);
+}
+.jb-osseo.open line {
+  transform: rotate(var(--a1));
+}
+.jb-osseo-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 0.7rem;
+  font-size: 0.66rem;
+  color: var(--jb-margin);
+}
+
+/* ── 04 판독대 ────────────────────────────────────────────── */
+.jb-viewbox {
+  background: var(--jb-box);
+  color: var(--jb-box-ink);
+  border-top: 0;
+  padding: 0;
+}
+.jb-viewbox .jb-h2,
+.jb-viewbox .jb-secno,
+.jb-viewbox .jb-sub {
+  color: var(--jb-box-ink);
+}
+.jb-viewbox .jb-sub,
+.jb-viewbox .jb-secno {
+  color: color-mix(in srgb, var(--jb-box-ink) 58%, transparent);
+}
+.jb-vb-track {
+  height: 230vh;
+}
+.jb-vb-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: clamp(18px, 3vw, 34px) var(--jb-pad);
+  gap: 14px;
+}
+/* 판독대 프레임 — 형광관 슬릿과 필름 클립 */
+.jb-vb-frame {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--jb-box-ink) 16%, transparent);
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  /* 스테이지가 프레임의 두 변을 모두 알아야 정사각을 안전하게 낼 수 있다 */
+  container-type: size;
+}
+.jb-vb-frame::before,
+.jb-vb-frame::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: color-mix(in srgb, var(--jb-box-ink) 22%, transparent);
+}
+.jb-vb-frame::before {
+  top: 0;
+}
+.jb-vb-frame::after {
+  bottom: 0;
+}
+.jb-clip {
+  position: absolute;
+  top: -1px;
+  width: 26px;
+  height: 9px;
+  background: color-mix(in srgb, var(--jb-box-ink) 30%, transparent);
+}
+/*
+ * 폭이 아니라 높이로 잡는다. 폭 기준이면 프레임보다 커져 하단이 잘리고,
+ * 그러면 스케일바가 사라진다 — 스케일바는 장식이 아니라 정보다.
+ */
+/*
+ * 폭과 높이 양쪽에서 잘린다. 폭만 잡으면 세로가 프레임을 넘어 스케일바가
+ * 사라지고, 높이만 잡으면 좁은 화면에서 가로가 잘린다. 스케일바와 십자선은
+ * 장식이 아니라 정보이므로 어느 쪽으로도 잘리면 안 된다.
+ */
+.jb-vb-stage {
+  position: relative;
+  width: min(100cqw, 100cqh, 72vh);
+  aspect-ratio: 1 / 1;
+}
+.jb-layer {
+  position: absolute;
+  inset: 0;
+  --d: calc(var(--p) - var(--s));
+  --ad: max(var(--d), calc(var(--d) * -1));
+  opacity: calc(1 - var(--ad));
+  transform: scale(calc(1 + var(--d) * var(--jb-k-scale)));
+  filter: blur(calc(var(--ad) * var(--jb-k-blur)));
+}
+.jb-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.jb-vb-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.jb-vb-svg line {
+  stroke: color-mix(in srgb, var(--jb-box-ink) 42%, transparent);
+  stroke-width: 0.4;
+}
+.jb-vb-svg text {
+  fill: color-mix(in srgb, var(--jb-box-ink) 62%, transparent);
+  font-size: 3px;
+  font-family: "IBM Plex Mono", monospace;
+}
+.jb-vb-scalebar {
+  stroke: var(--jb-seal);
+  stroke-width: 0.8;
+}
+/* 스펙트럼 눈금자 */
+.jb-spectrum {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  font-size: 0.62rem;
+  color: color-mix(in srgb, var(--jb-box-ink) 55%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--jb-box-ink) 16%, transparent);
+  padding-bottom: 5px;
+}
+.jb-spectrum button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--jb-box-ink) 16%, transparent);
+  color: inherit;
+  font: inherit;
+  padding: 0 0 0 6px;
+  flex: 1;
+  text-align: left;
+  cursor: pointer;
+}
+.jb-spectrum button {
+  transition:
+    color calc(var(--jb-m) * 0.5s) var(--jb-e-optic),
+    border-color calc(var(--jb-m) * 0.5s) var(--jb-e-optic);
+}
+.jb-spectrum button[aria-selected="true"] {
+  color: var(--jb-box-ink);
+  border-left-color: var(--jb-seal);
+}
+.jb-vb-cap {
+  min-height: 3.4em;
+  font-size: 0.82rem;
+  max-width: 62ch;
+  color: color-mix(in srgb, var(--jb-box-ink) 78%, transparent);
+}
+.jb-vb-cap b {
+  display: block;
+  font-weight: 400;
+  color: var(--jb-box-ink);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+/* 정합 실패 시의 폴백 — 겹침을 버리고 탭으로 */
+.jb-viewbox.is-tabs .jb-layer {
+  opacity: 0;
+  transform: none;
+  filter: none;
+  visibility: hidden;
+}
+.jb-viewbox.is-tabs .jb-layer.on {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jb-vb-track {
+    height: auto;
+  }
+  .jb-vb-sticky {
+    position: static;
+    height: auto;
+  }
+  .jb-vb-stage {
+    aspect-ratio: auto;
+    display: grid;
+    gap: 18px;
+    width: 100%;
+  }
+  .jb-layer {
+    position: static;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+  .jb-vb-svg {
+    display: none;
+  }
+}
+
+/* ── 05 잘못될 수 있는 것 ─────────────────────────────────── */
+/* 앞뒤가 지면 폭 전체라 여기서 리듬이 꺾인다 */
+.jb-adverse {
+  padding-block: clamp(140px, 18vw, 240px);
+}
+.jb-adverse-wrap {
+  max-width: 480px;
+  margin-inline: auto;
+  padding-inline: var(--jb-pad);
+}
+.jb-adverse p {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 0.96rem;
+  line-height: 1.9;
+  margin: 1.5rem 0 0;
+  text-align: left;
+}
+.jb-fn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0 0 0 2px;
+  font: inherit;
+  font-size: 0.62rem;
+  vertical-align: super;
+  color: var(--jb-seal);
+  cursor: pointer;
+}
+.jb-adverse p.lit {
+  box-shadow: inset 0 -1px 0 var(--jb-rule);
+}
+.jb-fnlist {
+  margin: 2.6rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--jb-rule);
+  list-style: none;
+  font-size: 0.7rem;
+  color: var(--jb-margin);
+  display: grid;
+  gap: 0.5rem;
+}
+.jb-fnlist li {
+  opacity: 0.55;
+  transform: translateY(2px);
+  transition:
+    opacity calc(var(--jb-m) * 0.2s) var(--jb-e-doc),
+    transform calc(var(--jb-m) * 0.2s) var(--jb-e-doc);
+}
+.jb-fnlist li.lit,
+.jb-fnlist li:hover {
+  opacity: 1;
+  transform: none;
+}
+.jb-fnlist b {
+  color: var(--jb-seal);
+  font-weight: 400;
+  margin-right: 5px;
+}
+
+/* ── 06 절차와 담당 ───────────────────────────────────────── */
+.jb-arts {
+  list-style: none;
+  margin: 2.2rem 0 0;
+  padding: 0;
+}
+.jb-art {
+  display: grid;
+  grid-template-columns: 4.4em minmax(0, 1fr);
+  gap: 16px;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--jb-rule);
+  color: var(--jb-margin);
+  transition: color calc(var(--jb-m) * 0.28s) var(--jb-e-doc);
+}
+/* 조문이 사라지지 않고 명도만 바뀐다 — 정보를 감추지 않는다 */
+.jb-art.on {
+  color: var(--jb-ink);
+}
+.jb-art-no {
+  font-size: 0.7rem;
+  padding-top: 0.28rem;
+}
+.jb-art-text {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-size: 0.96rem;
+  line-height: 1.75;
+}
+.jb-art-how {
+  display: block;
+  font-family: var(--font-kr);
+  font-size: 0.7rem;
+  color: var(--jb-margin);
+  margin-top: 0.4rem;
+}
+.jb-halt-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 2.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--jb-rule);
+  font-size: 0.78rem;
+  color: var(--jb-margin);
+}
+.jb-halt-btn {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--jb-ink);
+  padding: 7px 18px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--jb-ink);
+  cursor: pointer;
+  /* 급정거 이징 — 멈춤은 부드럽게 끝나지 않는다 */
+  transition:
+    background 0.18s var(--jb-e-halt),
+    color 0.18s var(--jb-e-halt),
+    border-color 0.18s var(--jb-e-halt);
+}
+.jb-halt-btn:hover {
+  background: var(--jb-ink);
+  color: var(--jb-page);
+}
+.jb-halt-btn[aria-pressed="true"] {
+  border-color: var(--jb-seal);
+  color: var(--jb-seal);
+}
+
+/* ── 07 서식 / 판권 ───────────────────────────────────────── */
+.jb-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  margin-top: 2.4rem;
+}
+@media (max-width: 900px) {
+  .jb-work {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.jb-field {
+  border-bottom: 1px solid var(--jb-rule);
+  padding: 0.7rem 0;
+}
+.jb-field > label,
+.jb-field > legend {
+  display: block;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--jb-margin);
+  margin-bottom: 5px;
+  padding: 0;
+}
+.jb-field input[type="text"],
+.jb-field textarea,
+.jb-field select {
+  width: 100%;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--jb-ink);
+  padding: 2px 0;
+  resize: vertical;
+}
+.jb-field input::placeholder,
+.jb-field textarea::placeholder {
+  color: color-mix(in srgb, var(--jb-margin) 55%, transparent);
+}
+.jb-field input:focus,
+.jb-field textarea:focus {
+  outline: none;
+  border-bottom-color: var(--jb-seal);
+}
+.jb-field fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.jb-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+}
+.jb-check {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 1px 2px 2px;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--jb-margin);
+  cursor: pointer;
+  transition:
+    color calc(var(--jb-m) * 0.18s) var(--jb-e-doc),
+    transform calc(var(--jb-m) * 0.22s) var(--jb-e-spring);
+}
+.jb-check[aria-pressed="true"] {
+  color: var(--jb-ink);
+  border-bottom-color: var(--jb-seal);
+  transform: translateY(-1px);
+}
+.jb-teeth {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 2px;
+  max-width: 360px;
+}
+/* 정중선 — 좌우 사분악의 경계 */
+.jb-teeth > :nth-child(8) {
+  margin-right: 5px;
+}
+.jb-tooth {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--jb-rule);
+  padding: 5px 0;
+  font: inherit;
+  font-size: 0.6rem;
+  color: var(--jb-margin);
+  cursor: pointer;
+  transition:
+    background calc(var(--jb-m) * 0.16s) var(--jb-e-doc),
+    color calc(var(--jb-m) * 0.16s) var(--jb-e-doc);
+}
+.jb-tooth[aria-pressed="true"] {
+  background: var(--jb-ink);
+  color: var(--jb-page);
+  border-color: var(--jb-ink);
+}
+.jb-teeth-row {
+  display: grid;
+  gap: 2px;
+}
+.jb-teeth-sep {
+  height: 1px;
+  background: var(--jb-rule);
+  margin: 3px 0;
+  max-width: 360px;
+}
+
+.jb-form-sheet {
+  background: var(--jb-sheet);
+  border: 1px solid var(--jb-rule);
+  padding: clamp(18px, 2.6vw, 32px);
+  font-size: 0.84rem;
+  align-self: start;
+}
+.jb-form-sheet h3 {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1rem;
+  margin: 0 0 0.2rem;
+}
+.jb-form-sheet .jb-sheet-sub {
+  font-size: 0.68rem;
+  color: var(--jb-margin);
+  padding-bottom: 0.8rem;
+  border-bottom: 1.5px solid var(--jb-ink);
+  margin: 0;
+}
+.jb-answers {
+  margin: 1rem 0 0;
+  display: grid;
+  grid-template-columns: 5.6em minmax(0, 1fr);
+  row-gap: 0.55rem;
+  column-gap: 12px;
+}
+.jb-answers dt {
+  color: var(--jb-margin);
+  font-size: 0.72rem;
+  padding-top: 0.1rem;
+}
+.jb-answers dd {
+  margin: 0;
+  border-bottom: 1px solid var(--jb-rule);
+  padding-bottom: 0.35rem;
+  min-height: 1.5em;
+}
+.jb-answers dd.empty {
+  color: color-mix(in srgb, var(--jb-margin) 50%, transparent);
+}
+.jb-ask {
+  margin: 1.6rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--jb-rule);
+  list-style: none;
+  counter-reset: ask;
+  font-size: 0.8rem;
+  display: grid;
+  gap: 0.42rem;
+}
+.jb-ask li {
+  counter-increment: ask;
+  display: grid;
+  grid-template-columns: 1.6em minmax(0, 1fr);
+}
+.jb-ask li::before {
+  content: counter(ask);
+  color: var(--jb-margin);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+}
+.jb-print-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.jb-print-row img {
+  width: 128px;
+  height: auto;
+  margin-top: 1.6rem;
+  mix-blend-mode: multiply;
+}
+.jb-print {
+  appearance: none;
+  margin-top: 1.6rem;
+  background: none;
+  border: 1px solid var(--jb-ink);
+  padding: 9px 20px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--jb-ink);
+  cursor: pointer;
+  transition:
+    background calc(var(--jb-m) * 0.18s) var(--jb-e-doc),
+    color calc(var(--jb-m) * 0.18s) var(--jb-e-doc);
+}
+.jb-print:hover {
+  background: var(--jb-ink);
+  color: var(--jb-sheet);
+}
+
+/* 진료시간 24시간 축 */
+.jb-hours {
+  margin-top: 1.2rem;
+  display: grid;
+  gap: 4px;
+  font-size: 0.68rem;
+}
+.jb-hour-row {
+  display: grid;
+  grid-template-columns: 3.4em minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+/* 24시간 눈금 — 축이 무엇인지 밝히지 않으면 막대는 장식이 된다 */
+.jb-hour-scale {
+  position: relative;
+  height: 1.1em;
+  color: var(--jb-margin);
+  font-size: 0.6rem;
+}
+.jb-hour-scale span {
+  position: absolute;
+  top: 0;
+  left: var(--a);
+  transform: translateX(-50%);
+}
+.jb-hour-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--jb-rule) 0 1px,
+    transparent 1px calc(100% / 8)
+  );
+  opacity: 0.6;
+}
+.jb-hour-bar {
+  position: relative;
+  height: 9px;
+  border-left: 1px solid var(--jb-rule);
+  border-right: 1px solid var(--jb-rule);
+}
+.jb-hour-open {
+  position: absolute;
+  top: 3px;
+  height: 3px;
+  background: var(--jb-ink);
+  left: var(--a);
+  width: var(--w);
+}
+.jb-hour-row.off .jb-hour-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 1px;
+  background: var(--jb-rule);
+}
+.jb-now {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--jb-seal);
+  left: var(--now);
+}
+.jb-status {
+  margin-top: 1.1rem;
+  font-size: 0.86rem;
+}
+.jb-status .off {
+  color: var(--jb-margin);
+}
+
+.jb-colophon {
+  border-top: 1px solid var(--jb-rule);
+  padding-block: 44px 64px;
+  font-size: 0.7rem;
+  color: var(--jb-margin);
+}
+.jb-colophon a {
+  color: inherit;
+}
+
+/* ── 인쇄 : 이 인터랙션의 진짜 출력물 ─────────────────────── */
+@media print {
+  .jb-site {
+    background: #fff;
+    color: #000;
+    font-size: 10.5pt;
+  }
+  .jb-strip-fixed,
+  .jb-back,
+  .jb-film,
+  .jb-axes,
+  .jb-toc,
+  .jb-rules,
+  .jb-viewbox,
+  .jb-watch,
+  .jb-adverse,
+  .jb-hold,
+  .jb-weeks,
+  .jb-print,
+  .jb-halt-row,
+  .jb-work > form,
+  .jb-row-open,
+  .jb-hira {
+    display: none !important;
+  }
+  .jb-sec {
+    padding-block: 0;
+    border: 0;
+    break-inside: avoid;
+  }
+  .jb-sheet,
+  .jb-form-sheet {
+    background: #fff;
+    border: 0;
+    padding: 0;
+  }
+  .jb-work {
+    grid-template-columns: 1fr;
+  }
+  .jb-print-only {
+    display: block !important;
+  }
+  .jb-page-break {
+    break-before: page;
+  }
+}
+.jb-print-only {
+  display: none;
+}
