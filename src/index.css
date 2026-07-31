@@ -43,8 +43,19 @@ body {
   letter-spacing: -0.02em;
 }
 
+/*
+ * IBM Plex Mono에는 한글 글리프가 없다. 한글 폰트를 폴백에 끼우지 않으면
+ * 시스템 고정폭으로 떨어져 글자마다 칸이 잡히고 '견 적  문 의'처럼 벌어진다.
+ * 라틴·숫자는 Plex Mono, 한글은 Pretendard로 간다.
+ */
 .pf-mono {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "IBM Plex Mono", var(--font-kr), monospace;
+}
+
+/* 한글 문장에 라틴용 트래킹을 그대로 주면 읽는 속도가 떨어진다. */
+.pf-label {
+  font-family: "IBM Plex Mono", var(--font-kr), monospace;
+  letter-spacing: 0.08em;
 }
 
 /* ============ Home reveal ============ */
