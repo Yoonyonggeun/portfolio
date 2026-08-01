@@ -23,6 +23,19 @@ type Project = {
 
 const projects: Project[] = [
   {
+    no: "07",
+    name: "무렵 01",
+    category: "포터블 조명 · 리빙",
+    year: "2026",
+    line: "어두워질수록, 따뜻해집니다.",
+    desc: "밝기와 색온도가 함께 내려가는 무선 램프. 페이지의 낮/밤 전환이 곧 제품 시연이고, 밝기 단을 고르면 화면 전체가 같이 어두워진다.",
+    tags: ["light / dark", "10s film", "AI stills ×10"],
+    image: "/assets/muryeop/space-bedside.webp",
+    href: "/work/muryeop",
+    accent: "#a992d1",
+    dark: true,
+  },
+  {
     no: "06",
     name: "MERIDIAN FLUID",
     category: "산업 부품 · 수출 B2B",
@@ -286,8 +299,8 @@ export default function Home() {
             style={{ ["--d" as string]: "0.24s" }}
           >
             {[
-              ["6", "프로젝트"],
-              ["40", "구조 스틸"],
+              ["7", "프로젝트"],
+              ["50", "구조 스틸"],
               ["610", "스크럽 프레임"],
               ["0", "촬영 컷"],
             ].map(([v, k]) => (
@@ -329,14 +342,15 @@ export default function Home() {
             <div className="pf-rv max-w-2xl">
               <p className="pf-label text-xs text-[var(--pf-dim)]">작업물</p>
               <h2 className="pf-display mt-4 text-[clamp(1.8rem,4vw,3rem)] font-bold leading-[1.14]">
-                다섯 개의 대상.
+                일곱 개의 대상.
                 <br />
-                다섯 가지 방법.
+                일곱 가지 방법.
               </h2>
               {/* 컨셉 작업이라는 사실은 숨기지 않되 사과하지 않는다. 의도로 말한다. */}
               <p className="mt-5 text-[15px] leading-relaxed text-[var(--pf-dim)]">
-                모두 자체 기획 프로젝트입니다. 네 개는 제품, 하나는 의료 서비스입니다. 대상이
-                바뀌면 속을 보여주는 방법도 바뀐다는 걸 확인하려고 만들었습니다.
+                모두 자체 기획 프로젝트입니다. 다섯은 소비재, 하나는 의료 서비스, 하나는 수출용
+                산업 부품입니다. 대상이 바뀌면 속을 보여주는 방법도 바뀐다는 걸 확인하려고
+                만들었습니다.
               </p>
             </div>
 

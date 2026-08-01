@@ -26,6 +26,38 @@
       /* 리빌의 숨김 상태를 여는 스위치. 이 줄이 실행되지 않으면 .pf-rv는
          숨겨지지 않는다. 첫 페인트 전에 걸려야 하므로 인라인·블로킹이다. */
       document.documentElement.classList.add("pf-js");
+
+      /*
+       * 무렵(07) 전용 테마 부트스트랩. 첫 페인트 전에 동기로 돌아야 다크로
+       * 들어갈 때 흰 화면이 한 프레임 번쩍이지 않는다. type="module"이면
+       * defer 취급이라 늦으므로 반드시 일반 스크립트로 둔다.
+       *
+       * 07 라우트에서만 의미가 있지만 값을 미리 읽어두는 건 무해하다.
+       * 실제 data-theme 부착·제거는 MuryeopPage가 마운트/언마운트에서 한다.
+       */
+      try {
+        var t = null;
+        try {
+          t = localStorage.getItem("muryeop-theme");
+        } catch (e) {
+          /* 사파리 프라이빗 등 localStorage 접근 자체가 던지는 환경 */
+        }
+        if (t !== "light" && t !== "dark") {
+          t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        window.__muryeopTheme = t;
+
+        /*
+         * 07만 테마를 갖는다. 다른 여섯 페이지는 명도가 고정된 디자인이라
+         * color-scheme이 새면 스크롤바만 반대로 뒤집힌다. 그래서 라우트를
+         * 직접 확인하고, CSS를 기다리지 않게 인라인 스타일로 같이 박는다
+         * — muryeop.css는 lazy 청크라 첫 페인트에 늦는다.
+         */
+        if (location.pathname === "/work/muryeop") {
+          document.documentElement.dataset.theme = t;
+          document.documentElement.style.colorScheme = t;
+        }
+      } catch (e) {}
     </script>
   </head>
   <body>
