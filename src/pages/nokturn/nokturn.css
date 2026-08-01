@@ -1,0 +1,1445 @@
+/*
+ * NOKTURN — 제3회 서울 국제 심야 단편영화제
+ *
+ * 전부 .nk-site 아래로 스코프한다. 포트폴리오의 다른 작업 페이지와 토큰이
+ * 섞이면 안 된다.
+ *
+ * 테마: 기본이 심야(dark). 새벽(light)은 :root[data-theme="light"]에서 덮어쓴다.
+ * 색을 반전시키는 게 아니라 '같은 장소의 다른 시각'으로 다시 칠하는 쪽에 가깝다 —
+ * 심야는 검정 위의 앰버, 새벽은 창백한 회보라 위의 흙빛이다.
+ */
+
+.nk-site {
+  --nk-bg: #08090b;
+  --nk-bg-2: #0e1014;
+  --nk-ink: #e9e4da;
+  --nk-dim: rgba(233, 228, 218, 0.56);
+  --nk-faint: rgba(233, 228, 218, 0.32);
+  --nk-line: rgba(233, 228, 218, 0.14);
+  --nk-accent: #f0b429;
+  --nk-hot: #d8443c;
+  --nk-card: #101216;
+  --nk-veil: 0.55;
+  --nk-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.9);
+  --nk-poster-bright: 0.92;
+
+  --nk-e: cubic-bezier(0.22, 1, 0.36, 1);
+  --nk-pad: clamp(20px, 5vw, 56px);
+  --nk-max: 1240px;
+
+  background: var(--nk-bg);
+  color: var(--nk-ink);
+  font-family: var(--font-kr), system-ui, sans-serif;
+  line-height: 1.65;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+:root[data-theme="light"] .nk-site {
+  --nk-bg: #e7e5e1;
+  --nk-bg-2: #dedbd5;
+  --nk-ink: #15171b;
+  --nk-dim: rgba(21, 23, 27, 0.62);
+  --nk-faint: rgba(21, 23, 27, 0.38);
+  --nk-line: rgba(21, 23, 27, 0.16);
+  --nk-accent: #9c6b12;
+  --nk-hot: #b23b31;
+  --nk-card: #f2f0ec;
+  --nk-veil: 0.2;
+  --nk-shadow: 0 30px 70px -45px rgba(20, 22, 26, 0.55);
+  --nk-poster-bright: 1;
+}
+
+.nk-site *,
+.nk-site *::before,
+.nk-site *::after {
+  box-sizing: border-box;
+}
+
+.nk-site :focus-visible {
+  outline: 2px solid var(--nk-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.nk-site ::selection {
+  background: var(--nk-accent);
+  color: #0a0a0c;
+}
+
+.nk-mono,
+.nk-site .nk-kicker,
+.nk-site .nk-tt-time,
+.nk-site .nk-tt-tick {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.nk-wrap {
+  width: 100%;
+  max-width: var(--nk-max);
+  margin-inline: auto;
+  padding-inline: var(--nk-pad);
+}
+
+.nk-sec {
+  padding-block: clamp(64px, 9vw, 132px);
+  position: relative;
+}
+
+.nk-head {
+  margin-bottom: clamp(30px, 4.5vw, 56px);
+}
+
+.nk-kicker {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--nk-accent);
+  margin: 0 0 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nk-kicker::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+  flex: none;
+}
+
+.nk-h2 {
+  font-size: clamp(1.9rem, 4.6vw, 3.3rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 0;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+
+.nk-lead {
+  margin: 1rem 0 0;
+  max-width: 52ch;
+  color: var(--nk-dim);
+  word-break: keep-all;
+}
+
+.nk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    background 0.22s var(--nk-e),
+    color 0.22s var(--nk-e),
+    border-color 0.22s var(--nk-e),
+    transform 0.22s var(--nk-e);
+}
+.nk-btn.solid {
+  background: var(--nk-accent);
+  color: #0a0a0c;
+}
+.nk-btn.line {
+  border-color: var(--nk-line);
+  color: var(--nk-ink);
+}
+.nk-btn:hover {
+  transform: translateY(-2px);
+}
+.nk-btn.line:hover {
+  border-color: var(--nk-ink);
+}
+
+/* ── 필름 그레인 ─────────────────────────────────────────────
+ * 실사 소스가 AI 생성이라 그대로 두면 지나치게 매끈하다. 아주 옅은
+ * 노이즈를 얹으면 '필름으로 찍은 것'에 훨씬 가까워진다.
+ */
+.nk-grain {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: nk-grain 640ms steps(3) infinite;
+}
+@keyframes nk-grain {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-3%, 2%); }
+  66% { transform: translate(2%, -3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ── 고정 레일 ───────────────────────────────────────────────── */
+.nk-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px var(--nk-pad);
+  pointer-events: none;
+}
+.nk-rail > * {
+  pointer-events: auto;
+}
+.nk-rail-back {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: var(--nk-ink);
+  background: color-mix(in srgb, var(--nk-bg) 72%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--nk-line);
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: border-color 0.2s var(--nk-e);
+}
+.nk-rail-back:hover {
+  border-color: var(--nk-ink);
+}
+
+.nk-themebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--nk-ink);
+  background: color-mix(in srgb, var(--nk-bg) 72%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--nk-line);
+  padding: 7px 14px 7px 11px;
+  border-radius: 999px;
+  transition:
+    border-color 0.2s var(--nk-e),
+    transform 0.2s var(--nk-e);
+}
+.nk-themebtn:hover {
+  border-color: var(--nk-ink);
+  transform: translateY(-1px);
+}
+.nk-themebtn-label {
+  font-family: var(--font-kr), sans-serif;
+  font-weight: 600;
+}
+
+/* ── 히어로 ─────────────────────────────────────────────────── */
+.nk-hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  isolation: isolate;
+}
+.nk-hero-media {
+  position: absolute;
+  inset: -8% 0 0;
+  z-index: -1;
+  will-change: transform;
+}
+.nk-hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.85) contrast(1.05);
+}
+.nk-hero-veil {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background:
+    linear-gradient(180deg, rgba(4, 5, 7, 0.72) 0%, rgba(4, 5, 7, 0.15) 32%, rgba(4, 5, 7, 0.9) 88%),
+    linear-gradient(90deg, rgba(4, 5, 7, 0.8) 0%, rgba(4, 5, 7, 0) 62%);
+}
+:root[data-theme="light"] .nk-hero-veil {
+  background:
+    linear-gradient(180deg, rgba(231, 229, 225, 0.6) 0%, rgba(231, 229, 225, 0.1) 30%, rgba(231, 229, 225, 0.94) 88%),
+    linear-gradient(90deg, rgba(231, 229, 225, 0.86) 0%, rgba(231, 229, 225, 0) 62%);
+}
+:root[data-theme="light"] .nk-hero-video {
+  filter: saturate(0.5) contrast(0.95) brightness(1.22);
+}
+
+.nk-hero-inner {
+  padding-block: clamp(90px, 14vh, 150px) clamp(74px, 11vh, 110px);
+}
+.nk-hero-edition {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: var(--nk-accent);
+  margin: 0 0 1.4rem;
+}
+.nk-hero-title {
+  font-size: clamp(2.7rem, 9.5vw, 7.4rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  margin: 0;
+  word-break: keep-all;
+}
+/* SplitText가 만드는 줄 래퍼 — mask:"lines"가 overflow:hidden을 붙여준다 */
+.nk-splitline {
+  will-change: transform;
+}
+
+.nk-hero-meta {
+  margin-top: clamp(26px, 4vw, 44px);
+  display: grid;
+  gap: 26px;
+  max-width: 760px;
+}
+.nk-hero-lead {
+  margin: 0;
+  color: var(--nk-dim);
+  font-size: clamp(0.95rem, 1.5vw, 1.06rem);
+  max-width: 46ch;
+  word-break: keep-all;
+}
+.nk-hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 38px;
+}
+.nk-hero-facts span {
+  display: grid;
+  gap: 2px;
+}
+.nk-hero-facts b {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.nk-hero-facts i {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--nk-faint);
+  letter-spacing: 0.06em;
+}
+.nk-hero-cta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nk-hero-count {
+  position: absolute;
+  right: var(--nk-pad);
+  bottom: clamp(74px, 11vh, 110px);
+  text-align: right;
+  display: grid;
+  gap: 4px;
+}
+.nk-hero-count-k {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--nk-faint);
+}
+.nk-hero-count-v {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: clamp(0.95rem, 2vw, 1.3rem);
+  color: var(--nk-ink);
+  font-variant-numeric: tabular-nums;
+}
+.nk-hero-count-v b {
+  font-weight: 600;
+  color: var(--nk-accent);
+}
+@media (max-width: 860px) {
+  .nk-hero-count {
+    display: none;
+  }
+}
+
+/* ── 마퀴 ───────────────────────────────────────────────────── */
+.nk-ticker {
+  border-block: 1px solid var(--nk-line);
+  overflow: hidden;
+  padding-block: 15px;
+  background: var(--nk-bg-2);
+}
+.nk-ticker-inner {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.nk-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 26px;
+  padding-inline: 26px;
+  font-size: clamp(0.86rem, 1.5vw, 1.05rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--nk-dim);
+}
+.nk-ticker-item em {
+  font-style: normal;
+  color: var(--nk-accent);
+  font-size: 0.7em;
+}
+
+/* ── 라인업 ─────────────────────────────────────────────────── */
+.nk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: clamp(26px, 3.5vw, 40px);
+}
+.nk-filter {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--nk-dim);
+  background: none;
+  border: 1px solid var(--nk-line);
+  border-radius: 999px;
+  padding: 9px 17px;
+  transition:
+    color 0.2s var(--nk-e),
+    border-color 0.2s var(--nk-e),
+    background 0.2s var(--nk-e);
+}
+.nk-filter sup {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.62em;
+  margin-left: 5px;
+  opacity: 0.6;
+}
+.nk-filter:hover {
+  color: var(--nk-ink);
+  border-color: var(--nk-ink);
+}
+.nk-filter[aria-selected="true"] {
+  background: var(--nk-ink);
+  border-color: var(--nk-ink);
+  color: var(--nk-bg);
+}
+
+.nk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 2.6vw, 34px) clamp(14px, 2vw, 26px);
+}
+@media (max-width: 900px) {
+  .nk-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .nk-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+  }
+}
+
+.nk-card {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  gap: 14px;
+  will-change: transform;
+}
+.nk-card-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: var(--nk-card);
+  border-radius: 3px;
+  isolation: isolate;
+}
+.nk-card-poster,
+.nk-card-clip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.nk-card-poster {
+  filter: brightness(var(--nk-poster-bright)) saturate(0.92);
+  transition:
+    transform 0.7s var(--nk-e),
+    filter 0.4s var(--nk-e);
+}
+.nk-card-clip {
+  opacity: 0;
+  transition: opacity 0.45s var(--nk-e);
+}
+.nk-card-clip[data-on="1"] {
+  opacity: 1;
+}
+.nk-card:hover .nk-card-poster,
+.nk-card:focus-visible .nk-card-poster {
+  transform: scale(1.045);
+  filter: brightness(1) saturate(1);
+}
+.nk-card .nk-grain {
+  opacity: 0.13;
+}
+
+.nk-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 3;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  padding: 5px 9px;
+  border-radius: 2px;
+  background: var(--nk-accent);
+  color: #0a0a0c;
+  font-weight: 600;
+}
+.nk-card-hasclip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(8, 9, 11, 0.6);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  opacity: 0.85;
+}
+
+/* 아래에서 밀려 올라오는 메타 스트립 */
+.nk-card-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 12px 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: #f2ede3;
+  background: linear-gradient(180deg, rgba(6, 7, 9, 0) 0%, rgba(6, 7, 9, 0.86) 62%);
+  transform: translateY(102%);
+  opacity: 0;
+  transition:
+    transform 0.42s var(--nk-e),
+    opacity 0.3s var(--nk-e);
+}
+.nk-card:hover .nk-card-strip,
+.nk-card:focus-visible .nk-card-strip {
+  transform: translateY(0);
+  opacity: 1;
+}
+.nk-card-strip b {
+  font-weight: 600;
+}
+.nk-card-strip i,
+.nk-card-strip em {
+  font-style: normal;
+  opacity: 0.72;
+}
+.nk-card-strip em {
+  margin-left: auto;
+  color: var(--accent, #f0b429);
+}
+
+.nk-card-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 12px;
+  align-items: start;
+}
+.nk-card-no {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.7rem;
+  color: var(--nk-faint);
+  padding-top: 4px;
+  grid-row: span 2;
+}
+.nk-card-titles {
+  display: grid;
+  gap: 1px;
+}
+.nk-card-titles strong {
+  font-size: clamp(1.02rem, 1.6vw, 1.18rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.nk-card-en {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.76rem;
+  color: var(--nk-faint);
+  letter-spacing: 0.01em;
+}
+.nk-card-meta {
+  grid-column: 2;
+  font-size: 0.78rem;
+  color: var(--nk-dim);
+  margin-top: 3px;
+}
+
+/* ── 상세 오버레이 ──────────────────────────────────────────── */
+.nk-detail-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: clamp(14px, 4vw, 42px);
+  background: color-mix(in srgb, var(--nk-bg) 78%, transparent);
+  backdrop-filter: blur(14px);
+}
+.nk-detail {
+  position: relative;
+  width: min(940px, 100%);
+  max-height: min(86dvh, 780px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--nk-card);
+  border: 1px solid var(--nk-line);
+  border-radius: 6px;
+  box-shadow: var(--nk-shadow);
+  will-change: transform;
+}
+.nk-detail-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  appearance: none;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--nk-line);
+  background: color-mix(in srgb, var(--nk-bg) 70%, transparent);
+  color: var(--nk-ink);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+.nk-detail-close:hover {
+  border-color: var(--nk-ink);
+}
+.nk-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr);
+}
+@media (max-width: 760px) {
+  .nk-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.nk-detail-fig {
+  margin: 0;
+  position: relative;
+  background: #0a0b0d;
+}
+.nk-detail-fig img {
+  width: 100%;
+  height: 100%;
+  max-height: 780px;
+  object-fit: cover;
+  display: block;
+}
+.nk-detail-body {
+  padding: clamp(22px, 3.4vw, 40px);
+}
+.nk-detail-sec {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--accent, var(--nk-accent));
+  margin: 0 0 0.8rem;
+}
+.nk-detail-badge {
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 3px 7px;
+  font-size: 0.9em;
+}
+.nk-detail-title {
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0;
+  word-break: keep-all;
+}
+.nk-detail-en {
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--nk-faint);
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+.nk-detail-log {
+  margin: 1.2rem 0 0;
+  font-size: 1.02rem;
+  color: var(--nk-ink);
+  word-break: keep-all;
+  border-left: 2px solid var(--accent, var(--nk-accent));
+  padding-left: 14px;
+}
+.nk-detail-spec {
+  display: grid;
+  grid-template-columns: 5.4em minmax(0, 1fr);
+  gap: 0;
+  margin: 1.6rem 0 0;
+  font-size: 0.86rem;
+  border-top: 1px solid var(--nk-line);
+}
+.nk-detail-spec dt {
+  color: var(--nk-faint);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--nk-line);
+  font-size: 0.8rem;
+}
+.nk-detail-spec dd {
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--nk-line);
+  color: var(--nk-dim);
+}
+.nk-detail-note {
+  margin: 1.4rem 0 0;
+  color: var(--nk-dim);
+  font-size: 0.92rem;
+  word-break: keep-all;
+}
+.nk-detail-cta {
+  display: inline-block;
+  margin-top: 1.6rem;
+  font-weight: 700;
+  color: var(--accent, var(--nk-accent));
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
+}
+
+/* ── 상영시간표 ─────────────────────────────────────────────── */
+.nk-tt {
+  background: var(--nk-bg-2);
+  border-block: 1px solid var(--nk-line);
+  overflow: hidden;
+}
+.nk-tt-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: clamp(26px, 4vw, 46px);
+}
+.nk-tt-right {
+  display: grid;
+  gap: 14px;
+  justify-items: end;
+}
+.nk-tt-clock {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: clamp(2rem, 5.5vw, 3.6rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  color: var(--nk-accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.nk-daytabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.nk-daytab {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  background: none;
+  border: 1px solid var(--nk-line);
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  color: var(--nk-dim);
+  transition:
+    border-color 0.2s var(--nk-e),
+    color 0.2s var(--nk-e),
+    background 0.2s var(--nk-e);
+}
+.nk-daytab b {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.nk-daytab i {
+  font-style: normal;
+  font-size: 0.66rem;
+  opacity: 0.7;
+}
+.nk-daytab em {
+  font-style: normal;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: var(--nk-accent);
+}
+.nk-daytab:hover {
+  color: var(--nk-ink);
+  border-color: var(--nk-ink);
+}
+.nk-daytab[aria-selected="true"] {
+  background: var(--nk-ink);
+  border-color: var(--nk-ink);
+  color: var(--nk-bg);
+}
+.nk-daytab[aria-selected="true"] em {
+  color: var(--nk-bg);
+  opacity: 0.7;
+}
+
+.nk-tt-viewport {
+  /* 가로 스크롤은 항상 native다. 데스크톱에서는 ScrollTrigger가 scrollLeft를
+     대신 움직이고(스크롤바는 숨긴다), 모바일에서는 손가락으로 민다. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding-inline: var(--nk-pad);
+  scrollbar-width: none;
+}
+.nk-tt-viewport::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 899px) {
+  .nk-tt-viewport {
+    scrollbar-width: thin;
+    padding-bottom: 12px;
+  }
+  .nk-tt-viewport::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+}
+.nk-tt-track {
+  /* 한 시간의 폭. 여섯 시간이 어떤 뷰포트에도 다 들어오지 않도록 잡는다 —
+     그래야 가로로 밀 거리가 남고 '스크롤 = 시간'이 성립한다. */
+  --hour: clamp(260px, 24vw, 420px);
+  width: max-content;
+  will-change: transform;
+}
+@media (max-width: 560px) {
+  .nk-tt-track {
+    --hour: 240px;
+    --label: 116px !important;
+  }
+}
+.nk-tt-axis {
+  display: grid;
+  grid-template-columns: var(--label) repeat(6, var(--hour));
+  align-items: center;
+  border-bottom: 1px solid var(--nk-line);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+.nk-tt-tick {
+  font-size: 0.68rem;
+  color: var(--nk-faint);
+  transform: translateX(-50%);
+}
+.nk-tt-axis-pad {
+  display: block;
+}
+
+.nk-tt-row {
+  display: grid;
+  grid-template-columns: var(--label) calc(6 * var(--hour));
+  gap: 0;
+  align-items: stretch;
+  border-bottom: 1px solid var(--nk-line);
+}
+/* 가로로 밀어도 상영관 이름은 왼쪽에 얼어붙는다 (frozen first column).
+   블록이 이름 뒤로 지나가야 하므로 불투명 배경과 z-index가 필요하다. */
+.nk-tt-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--nk-bg-2);
+  padding: 16px 16px 16px 0;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  box-shadow: 16px 0 20px -16px color-mix(in srgb, var(--nk-bg) 92%, transparent);
+}
+/* 뷰포트의 좌측 패딩(거터)까지 불투명하게 덮는다. 이게 없으면 밀려 나간
+   상영 블록이 이름 열 왼쪽 여백으로 삐져나와 보인다. */
+.nk-tt-label::before,
+.nk-tt-axis-pad::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  width: 100vw;
+  background: var(--nk-bg-2);
+}
+.nk-tt-axis-pad {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--nk-bg-2);
+}
+.nk-tt-label b {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.nk-tt-label i {
+  font-style: normal;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.66rem;
+  color: var(--nk-faint);
+}
+.nk-tt-lane {
+  position: relative;
+  min-height: 104px;
+  padding-block: 10px;
+}
+.nk-tt-grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--nk-line);
+  opacity: 0.6;
+}
+
+.nk-tt-block {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 10px 13px;
+  border-radius: 4px;
+  border: 1px solid var(--nk-line);
+  background: color-mix(in srgb, var(--nk-ink) 7%, transparent);
+  overflow: hidden;
+  transition:
+    border-color 0.22s var(--nk-e),
+    background 0.22s var(--nk-e),
+    transform 0.22s var(--nk-e);
+}
+.nk-tt-block:hover {
+  border-color: var(--nk-accent);
+  background: color-mix(in srgb, var(--nk-accent) 12%, transparent);
+  transform: translateY(-2px);
+}
+.nk-tt-block[data-sold="1"] {
+  opacity: 0.5;
+}
+.nk-tt-time {
+  font-size: 0.68rem;
+  color: var(--nk-accent);
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+}
+.nk-tt-time i {
+  font-style: normal;
+  color: var(--nk-faint);
+}
+.nk-tt-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nk-tt-films {
+  font-size: 0.72rem;
+  color: var(--nk-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nk-tt-tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+.nk-tt-tags em {
+  font-style: normal;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+}
+.nk-tt-tags .gv {
+  color: var(--nk-accent);
+}
+.nk-tt-tags .sold {
+  color: var(--nk-hot);
+}
+.nk-tt-tags .ok {
+  color: var(--nk-faint);
+}
+.nk-tt-foot {
+  margin: 22px auto 0;
+  font-size: 0.78rem;
+  color: var(--nk-faint);
+}
+
+/* ── 프로그램 노트 ──────────────────────────────────────────── */
+.nk-notes-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 76px);
+  align-items: start;
+}
+@media (max-width: 880px) {
+  .nk-notes-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nk-notes-sticky {
+    position: static !important;
+  }
+}
+.nk-notes-sticky {
+  position: sticky;
+  top: 14vh;
+  display: grid;
+  gap: 16px;
+}
+.nk-notes-fig {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  aspect-ratio: 4 / 5;
+  background: var(--nk-card);
+  isolation: isolate;
+}
+.nk-notes-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  will-change: transform;
+}
+.nk-notes-index {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.nk-notes-index b {
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--nk-accent);
+  letter-spacing: -0.03em;
+}
+.nk-notes-index i {
+  font-style: normal;
+  color: var(--nk-faint);
+  font-size: 0.85rem;
+}
+
+.nk-notes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(38px, 6vw, 74px);
+}
+.nk-note {
+  padding-left: 22px;
+  border-left: 1px solid var(--nk-line);
+  transition:
+    border-color 0.45s var(--nk-e),
+    opacity 0.45s var(--nk-e);
+  opacity: 0.5;
+}
+.nk-note[data-on="1"] {
+  border-left-color: var(--nk-accent);
+  opacity: 1;
+}
+.nk-note-kicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--nk-accent);
+  margin: 0 0 0.7rem;
+}
+.nk-note-title {
+  font-size: clamp(1.3rem, 2.8vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0;
+  word-break: keep-all;
+}
+.nk-note-body {
+  margin: 0.9rem 0 0;
+  color: var(--nk-dim);
+  word-break: keep-all;
+  max-width: 44ch;
+}
+
+/* ── 상영관 ─────────────────────────────────────────────────── */
+.nk-venues {
+  background: var(--nk-bg-2);
+  border-block: 1px solid var(--nk-line);
+}
+.nk-venues-head {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: clamp(26px, 4vw, 44px);
+}
+.nk-venues-nav {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.nk-venues-nav button {
+  appearance: none;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid var(--nk-line);
+  background: none;
+  color: var(--nk-ink);
+  font-size: 1rem;
+  transition:
+    border-color 0.2s var(--nk-e),
+    transform 0.2s var(--nk-e);
+}
+.nk-venues-nav button:hover {
+  border-color: var(--nk-ink);
+  transform: translateY(-2px);
+}
+
+.nk-embla {
+  overflow: hidden;
+  padding-inline: var(--nk-pad);
+}
+.nk-embla-track {
+  display: flex;
+  gap: clamp(14px, 2vw, 24px);
+  touch-action: pan-y pinch-zoom;
+}
+.nk-venue {
+  flex: 0 0 min(420px, 82%);
+  display: grid;
+  gap: 16px;
+  opacity: 0.55;
+  transition: opacity 0.45s var(--nk-e);
+}
+.nk-venue[data-active="1"] {
+  opacity: 1;
+}
+.nk-venue-fig {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  aspect-ratio: 16 / 10;
+  background: var(--nk-card);
+}
+.nk-venue-fig img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.nk-venue-fig figcaption {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(8, 9, 11, 0.62);
+  backdrop-filter: blur(6px);
+  color: #f2ede3;
+}
+.nk-venue-body h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.nk-venue-addr {
+  margin: 4px 0 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.74rem;
+  color: var(--nk-faint);
+}
+.nk-venue-note {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  color: var(--nk-dim);
+  word-break: keep-all;
+}
+
+.nk-dots {
+  display: flex;
+  gap: 7px;
+  margin-top: 26px;
+}
+.nk-dot {
+  appearance: none;
+  cursor: pointer;
+  width: 26px;
+  height: 3px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--nk-line);
+  padding: 0;
+  transition: background 0.25s var(--nk-e);
+}
+.nk-dot[data-on="1"] {
+  background: var(--nk-accent);
+}
+
+/* ── 관람권 (티켓 스텁) ─────────────────────────────────────── */
+.nk-stubs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 22px);
+  perspective: 1100px;
+}
+@media (max-width: 880px) {
+  .nk-stubs {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 460px;
+  }
+}
+.nk-stub {
+  --rx: 0deg;
+  --ry: 0deg;
+  position: relative;
+  background: var(--nk-card);
+  border: 1px solid var(--nk-line);
+  border-radius: 6px;
+  overflow: hidden;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition:
+    transform 0.4s var(--nk-e),
+    border-color 0.3s var(--nk-e);
+}
+.nk-stub:hover {
+  border-color: var(--nk-accent);
+}
+.nk-stub[data-featured="1"] {
+  border-color: var(--nk-accent);
+  background: color-mix(in srgb, var(--nk-accent) 8%, var(--nk-card));
+}
+.nk-stub-top {
+  padding: clamp(20px, 2.6vw, 28px);
+  display: grid;
+  gap: 12px;
+}
+.nk-stub-top h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.nk-stub-price {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+}
+.nk-stub-price b {
+  font-size: clamp(1.7rem, 3.4vw, 2.2rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+.nk-stub-price i {
+  font-style: normal;
+  font-size: 0.74rem;
+  color: var(--nk-faint);
+}
+
+/* 절취선: 양옆 반원 + 점선 */
+.nk-stub-perf {
+  display: block;
+  position: relative;
+  height: 18px;
+  border-top: 1px dashed var(--nk-line);
+}
+.nk-stub-perf::before,
+.nk-stub-perf::after {
+  content: "";
+  position: absolute;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--nk-bg);
+}
+.nk-stub-perf::before {
+  left: -9px;
+}
+.nk-stub-perf::after {
+  right: -9px;
+}
+
+.nk-stub-bot {
+  padding: 6px clamp(20px, 2.6vw, 28px) clamp(20px, 2.6vw, 28px);
+}
+.nk-stub-bot ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.nk-stub-bot li {
+  font-size: 0.86rem;
+  color: var(--nk-dim);
+  padding-left: 16px;
+  position: relative;
+}
+.nk-stub-bot li::before {
+  content: "✳";
+  position: absolute;
+  left: 0;
+  color: var(--nk-accent);
+  font-size: 0.7em;
+  top: 0.3em;
+}
+.nk-stub-note {
+  margin: 14px 0 0;
+  font-size: 0.76rem;
+  color: var(--nk-faint);
+  word-break: keep-all;
+  border-top: 1px solid var(--nk-line);
+  padding-top: 12px;
+}
+.nk-stub-cta {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--nk-accent);
+}
+
+/* ── 푸터 ───────────────────────────────────────────────────── */
+.nk-foot {
+  border-top: 1px solid var(--nk-line);
+  padding-block: clamp(40px, 6vw, 70px) 34px;
+  background: var(--nk-bg-2);
+}
+.nk-foot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px 60px;
+  justify-content: space-between;
+}
+.nk-foot p {
+  margin: 0 0 4px;
+  font-size: 0.86rem;
+  color: var(--nk-dim);
+}
+.nk-foot-logo {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  margin-bottom: 10px;
+}
+.nk-foot-en {
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--nk-faint) !important;
+  font-size: 0.78rem !important;
+}
+.nk-foot-col {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+}
+.nk-foot-demo {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--nk-line);
+  font-size: 0.74rem;
+  color: var(--nk-faint);
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+/* ── 접근성 ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .nk-site *,
+  .nk-site *::before,
+  .nk-site *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .nk-grain {
+    animation: none;
+  }
+  .nk-card-strip {
+    transform: none;
+    opacity: 1;
+  }
+  .nk-note {
+    opacity: 1;
+  }
+}

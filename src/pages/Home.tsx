@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import ThemeToggle from "../lib/ThemeToggle";
 
 /* 스튜디오 이름은 여기 한 곳만 바꾸면 전체에 반영됩니다. */
 const STUDIO = "PRODUCT FILM";
@@ -18,6 +19,18 @@ type Project = {
 };
 
 const projects: Project[] = [
+  {
+    no: "05",
+    name: "NOKTURN",
+    category: "국제 심야 단편영화제",
+    year: "2026",
+    desc: "제품이 아닌 첫 작업. 밤 10시부터 새벽 4시까지만 상영하는 가상의 영화제 사이트. 스크롤이 곧 시각이 되는 상영시간표, FLIP으로 재배치되는 라인업 그리드, 포스터 위에서 재생되는 12초 프리뷰. 심야↔새벽 테마 전환.",
+    tags: ["GSAP Flip · ScrollTrigger", "Lenis + Motion", "dark/light", "AI film 15s ×1 · 12s ×3"],
+    image: "https://d2ol7oe51mr4n9.cloudfront.net/user_3EWnZzTSAsTHSEPmy7uQdn8lIfH/0daa784d-9d88-41de-82e1-a66bd756b2f1.webp",
+    href: "/work/nokturn",
+    accent: "#f0b429",
+    dark: true,
+  },
   {
     no: "04",
     name: "AURUM Calibre 04",
@@ -142,12 +155,15 @@ export default function Home() {
     <div className="pf-site min-h-dvh">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 pt-8">
         <span className="pf-display text-sm font-bold tracking-[0.25em]">{STUDIO}</span>
-        <a
-          href={CONTACT}
-          className="pf-mono rounded-full border border-[var(--pf-line)] px-4 py-2 text-xs transition-colors hover:bg-[var(--pf-ink)] hover:text-white"
-        >
-          프로젝트 문의
-        </a>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <a
+            href={CONTACT}
+            className="pf-mono rounded-full border border-[var(--pf-line)] px-4 py-2 text-xs transition-colors hover:bg-[var(--pf-ink)] hover:text-[var(--pf-paper)]"
+          >
+            프로젝트 문의
+          </a>
+        </div>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 md:pt-28">
@@ -155,17 +171,18 @@ export default function Home() {
           AI product film · scroll-driven detail pages
         </p>
         <h1 className="pf-display mt-5 max-w-3xl text-4xl font-bold leading-[1.12] md:text-6xl">
-          제품 하나를,
+          하나를,
           <br />
           스크롤 한 편의 필름으로.
         </h1>
         <p className="mt-6 max-w-xl text-base leading-relaxed text-[var(--pf-dim)] md:text-lg">
           촬영 없이 AI 생성 에셋만으로 히어로 필름·분해 컷·디테일 스틸을 만들고, 스크롤
-          인터랙션으로 엮어 반나절 안에 배포하는 제품 상세페이지 스튜디오입니다.
+          인터랙션으로 엮어 반나절 안에 배포합니다. 제품 상세페이지에서 시작해 브랜드·이벤트
+          사이트까지 넓히는 중입니다.
         </p>
         <div className="pf-mono mt-10 flex flex-wrap gap-x-10 gap-y-3 text-sm">
           <span>
-            <b className="text-lg">4</b>&nbsp;films shipped
+            <b className="text-lg">5</b>&nbsp;films shipped
           </span>
           <span>
             <b className="text-lg">½</b>&nbsp;day per product
