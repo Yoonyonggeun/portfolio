@@ -24,6 +24,30 @@ type Project = {
 
 const projects: Project[] = [
   {
+    no: "10",
+    name: "석리 石理",
+    category: "포세린 슬래브 · 내수 B2B",
+    year: "2026",
+    line: "표면이 아니라, 잘린 면을 판다.",
+    desc: "좌측 필터와 전폭 그리드로 짠 소재 라이브러리. 무늬가 두께를 관통하는지를 절단면 두 장으로 대조하고, 조명 입사각을 낮추면 표면 요철이 드러난다. 12개 품목이 매크로 4장에서 파생된다.",
+    tags: ["filter + grid", "grazing light", "AI stills ×8"],
+    image: "/assets/seokri/cut-body.webp",
+    href: "/work/seokri",
+    accent: "#8c4a2f",
+  },
+  {
+    no: "09",
+    name: "불목 S1",
+    category: "아웃도어 · 크라우드펀딩 상세페이지",
+    year: "2026",
+    line: "에디터 안에서 작동하는 상세페이지.",
+    desc: "앞의 여덟 편과 달리 랜딩이 아니라 와디즈 스토리에 그대로 올라가는 산출물. 컬럼 740px과 이미지 1024px은 플랫폼이 정한 값이고, 토글 하나로 에디터가 못 받는 것들이 살아난다.",
+    tags: ["wadiz 740px", "AI stills ×9", "SVG 도해"],
+    image: "/assets/bulmok/hero.webp",
+    href: "/work/bulmok",
+    accent: "#4b4a9e",
+  },
+  {
     no: "08",
     name: "NOKTURN",
     category: "심야 단편영화제 · 문화",
@@ -315,8 +339,8 @@ export default function Home() {
             style={{ ["--d" as string]: "0.24s" }}
           >
             {[
-              ["8", "프로젝트"],
-              ["60", "구조 스틸"],
+              ["10", "프로젝트"],
+              ["77", "구조 스틸"],
               ["610", "스크럽 프레임"],
               ["0", "촬영 컷"],
             ].map(([v, k]) => (
@@ -358,14 +382,15 @@ export default function Home() {
             <div className="pf-rv max-w-2xl">
               <p className="pf-label text-xs text-[var(--pf-dim)]">작업물</p>
               <h2 className="pf-display mt-4 text-[clamp(1.8rem,4vw,3rem)] font-bold leading-[1.14]">
-                여덟 개의 대상.
+                열 개의 대상.
                 <br />
-                여덟 가지 방법.
+                열 가지 방법.
               </h2>
               {/* 컨셉 작업이라는 사실은 숨기지 않되 사과하지 않는다. 의도로 말한다. */}
               <p className="mt-5 text-[15px] leading-relaxed text-[var(--pf-dim)]">
-                모두 자체 기획 프로젝트입니다. 다섯은 소비재, 하나는 의료 서비스, 하나는 수출용
-                산업 부품, 하나는 제품이 아예 없는 영화제입니다. 대상이 바뀌면 속을 보여주는
+                모두 자체 기획 프로젝트입니다. 다섯은 소비재, 하나는 의료 서비스, 둘은 산업
+                부품과 건축 소재, 하나는 제품이 아예 없는 영화제, 하나는 랜딩이 아니라 크라우드
+                펀딩 플랫폼 안에 그대로 올라가는 상세페이지입니다. 대상이 바뀌면 속을 보여주는
                 방법도 바뀐다는 걸 확인하려고 만들었습니다.
               </p>
             </div>

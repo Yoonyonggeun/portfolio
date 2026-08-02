@@ -1,0 +1,891 @@
+/*
+ * 석리 石理 / SEOKRI — 포세린 슬래브 소재 라이브러리 (10)
+ *
+ * 09와 정면으로 반대인 페이지다. 09는 고정 740px 세로 한 컬럼에 인터랙션이
+ * 0인 커머스 산출물이고, 이건 뷰포트 전폭을 쓰는 탐색 도구다.
+ *
+ * 06 MERIDIAN과 '또 B2B 스펙 카탈로그'로 뭉뚱그려지지 않기 위해 세 가지를
+ * 강제로 못 박았다:
+ *   1. 훅이 '파라미터 → 수치표'(06)가 아니라 '파라미터 → 광학 변화'다. 수치 0.
+ *   2. 모노 폰트를 한 글자도 쓰지 않는다. 06의 뼈대가 IBM Plex Mono다.
+ *   3. 척추를 절단면으로 세우고 스펙·인증을 하단으로 민다. 업계 관행은
+ *      스펙이 중반인데, 그 순서를 따르면 06이 된다.
+ *
+ * 실측한 이 바닥의 레이아웃 문법(2026-08-02, Marazzi·Mutina·Dinesen·
+ * 이건창호·윤현상재·LX Z:IN):
+ *   좌측 고정 패싯 레일 + 우측 스와치 그리드 3~4열
+ *   카드 면적의 80% 이상이 소재 이미지, 텍스트는 아래 2~6줄
+ *   이미지는 예외 없이 원근 없는 정면 0° 플랫 — 배경도 인물도 없다
+ *   결과 개수를 숫자로 상단에 찍는다
+ *   비교 트레이(최대 3)가 하단 또는 우측에 상주한다
+ *   상세는 그리드를 버리고 축을 뒤집는다
+ *
+ * 8편이 공유하던 관용구는 하나도 쓰지 않는다:
+ *   ✗ max-width 중앙 래퍼            → 좌 sticky 파사드 + 우 전폭 그리드
+ *   ✗ 섹션 배경 교대                  → 캔버스 하나, 카드만 뜬다
+ *   ✗ translateY / clip-path 리빌     → 이동 0px, 광학만 전이
+ *   ✗ IBM Plex Mono·Space Grotesk 등  → Noto Serif KR + Schibsted Grotesk
+ */
+
+/* ── 토큰 ─────────────────────────────────────────────────── */
+.sk-site {
+  /* 순백이 아니다. 03·05가 이미 순백 두 편이고, 소재 색을 정확히 읽히게
+     하려면 바탕이 중립 웜이어야 한다(실측: 이 바닥은 전부 오프화이트). */
+  --sk-canvas: #e8e3da;
+  --sk-card: #f2eee7;
+  --sk-facade: #dcd5c9;
+  --sk-ink: #2b2721;
+  --sk-dim: #6d6459;
+  --sk-line: #c9c0b2;
+  --sk-hair: rgba(43, 39, 33, 0.09);
+
+  /* 산화철. 02의 형광 오렌지(#ff4d00)와 달리 채도를 눌러 죽인 갈적색이다. */
+  --sk-iron: #8c4a2f;
+  /* 절단면에서 드러나는 백색 바디 */
+  --sk-core: #b8a888;
+
+  --sk-facade-w: 280px;
+  --sk-pad: clamp(16px, 2.2vw, 32px);
+  --sk-ease: cubic-bezier(0.22, 0.8, 0.28, 1);
+
+  background: var(--sk-canvas);
+  color: var(--sk-ink);
+  min-height: 100dvh;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sk-site :focus-visible {
+  outline: 2px solid var(--sk-iron);
+  outline-offset: 3px;
+}
+.sk-site ::selection {
+  background: var(--sk-iron);
+  color: #fff;
+}
+.sk-site img {
+  display: block;
+  max-width: 100%;
+}
+.sk-site button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/*
+ * 조판. 국문 본문 세리프는 실측상 8편에 0편이다 — muryeop의 Noto Serif KR은
+ * Instrument Serif 뒤에 붙은 디스플레이 보조지 본문이 아니다.
+ * 라틴·UI는 Schibsted Grotesk. 모노는 한 글자도 없다.
+ */
+.sk-body {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.9;
+}
+.sk-ui {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  letter-spacing: -0.01em;
+}
+.sk-num {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* 규격 구분자는 x가 아니라 가운뎃점 — 실측한 이 바닥의 표기 관습 */
+
+/* ── 상단 ─────────────────────────────────────────────────── */
+.sk-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px var(--sk-pad);
+  border-bottom: 1px solid var(--sk-line);
+}
+.sk-back {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--sk-dim);
+  text-decoration: none;
+}
+.sk-back:hover {
+  color: var(--sk-iron);
+}
+.sk-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.sk-brand b {
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1.28rem;
+  letter-spacing: 0.14em;
+}
+.sk-brand i {
+  font-style: normal;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: var(--sk-dim);
+}
+
+/* ── 히어로 ───────────────────────────────────────────────────
+ * 좌측 파사드는 이 시점부터 이미 붙어 있다. 히어로가 전폭을 먹고
+ * 그 다음에 그리드가 오는 흔한 순서를 쓰지 않는다. */
+.sk-shell {
+  display: grid;
+  grid-template-columns: var(--sk-facade-w) minmax(0, 1fr);
+  align-items: start;
+}
+
+.sk-facade {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100dvh;
+  overflow-y: auto;
+  background: var(--sk-facade);
+  border-right: 1px solid var(--sk-line);
+  padding: var(--sk-pad) 20px 40px;
+  scrollbar-width: thin;
+}
+.sk-facade h2 {
+  margin: 0 0 6px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sk-dim);
+}
+.sk-axis {
+  margin-top: 26px;
+}
+.sk-axis h3 {
+  margin: 0 0 10px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.sk-axis ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+}
+.sk-opt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 5px 6px;
+  border-radius: 3px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.86rem;
+  color: var(--sk-dim);
+  text-align: left;
+  transition: color 0.18s;
+}
+.sk-opt:hover {
+  color: var(--sk-ink);
+}
+.sk-opt span:first-child {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border: 1px solid var(--sk-line);
+  background: #fff;
+  border-radius: 2px;
+  position: relative;
+}
+.sk-opt[aria-pressed="true"] {
+  color: var(--sk-ink);
+}
+.sk-opt[aria-pressed="true"] span:first-child {
+  background: var(--sk-iron);
+  border-color: var(--sk-iron);
+}
+.sk-opt[aria-pressed="true"] span:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: #fff;
+  border-radius: 1px;
+}
+.sk-opt small {
+  margin-left: auto;
+  font-size: 0.74rem;
+  color: var(--sk-line);
+}
+.sk-clear {
+  margin-top: 26px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.78rem;
+  color: var(--sk-iron);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── 우측 ─────────────────────────────────────────────────── */
+.sk-main {
+  min-width: 0;
+  padding-bottom: 120px;
+}
+
+.sk-hero {
+  padding: clamp(34px, 5vw, 76px) var(--sk-pad) clamp(26px, 3vw, 42px);
+  border-bottom: 1px solid var(--sk-line);
+}
+.sk-hero h1 {
+  margin: 0;
+  max-width: 20ch;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: clamp(1.9rem, 4vw, 3.3rem);
+  line-height: 1.32;
+  letter-spacing: -0.02em;
+}
+.sk-hero h1 em {
+  font-style: normal;
+  color: var(--sk-iron);
+}
+.sk-hero p {
+  margin: 18px 0 0;
+  max-width: 52ch;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.95;
+  color: var(--sk-dim);
+}
+
+/* 숫자 카운터 띠 — Marazzi가 히어로 직하에 까는 실측 문법 */
+.sk-count {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--sk-line);
+}
+.sk-count div {
+  flex: 1 1 140px;
+  padding: 16px var(--sk-pad);
+  border-right: 1px solid var(--sk-line);
+}
+.sk-count div:last-child {
+  border-right: 0;
+}
+.sk-count dt {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sk-dim);
+}
+.sk-count dd {
+  margin: 5px 0 0;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.sk-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px var(--sk-pad);
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.84rem;
+  color: var(--sk-dim);
+}
+.sk-bar b {
+  color: var(--sk-ink);
+  font-weight: 600;
+}
+
+/* ── 스와치 그리드 ─────────────────────────────────────────
+ * 뷰포트 전폭 4열. 래퍼가 없고 거터만 뺀다. */
+.sk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--sk-line);
+  border-top: 1px solid var(--sk-line);
+  border-bottom: 1px solid var(--sk-line);
+}
+.sk-cell {
+  background: var(--sk-card);
+  padding: 0 0 14px;
+  text-align: left;
+  display: block;
+  width: 100%;
+  /* 필터에 걸리지 않아도 자리를 지킨다 — 재배열하지 않는 게 이 페이지의 규칙.
+     FLIP으로 카드가 튀는 순간 소재 간 비교가 불가능해진다. */
+  transition:
+    filter 0.42s var(--sk-ease),
+    opacity 0.42s var(--sk-ease);
+}
+.sk-cell[data-off="1"] {
+  filter: saturate(0) contrast(0.9);
+  opacity: 0.32;
+  cursor: default;
+}
+.sk-swatch {
+  /* button 안의 span이라 기본값이 인라인이다. block으로 못 박지 않으면
+     aspect-ratio가 통째로 무시돼 스와치 높이가 0이 된다. */
+  display: block;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--sk-facade);
+}
+.sk-swatch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/*
+ * 리빌 — 이동 0px. 스와치가 화면에 들어오면 저각 그레이징 상태에서
+ * 정상 조명으로 전이하며 표면 요철이 가라앉는다. 05·06의 translateY도,
+ * 07의 clip-path 와이프도 아니다. 광학만 움직인다.
+ */
+.sk-swatch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, rgba(0, 0, 0, 0.34), rgba(255, 255, 255, 0.22));
+  mix-blend-mode: overlay;
+  opacity: 1;
+  transition: opacity 0.9s var(--sk-ease) var(--sd, 0s);
+}
+.sk-swatch[data-lit]::after {
+  opacity: 0;
+}
+.sk-cellmeta {
+  display: block;
+  padding: 12px 14px 0;
+}
+.sk-cellmeta b {
+  display: block;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1rem;
+}
+.sk-cellmeta i {
+  display: block;
+  margin-top: 3px;
+  font-style: normal;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--sk-dim);
+}
+.sk-cellmeta u {
+  display: block;
+  margin-top: 8px;
+  text-decoration: none;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.74rem;
+  color: var(--sk-dim);
+}
+.sk-flag {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--sk-line);
+  color: var(--sk-dim);
+}
+.sk-flag[data-b="1"] {
+  border-color: var(--sk-iron);
+  color: var(--sk-iron);
+}
+
+/* ── 비교 트레이 ───────────────────────────────────────────
+ * 실측: 이 바닥은 최대 3장을 하단 또는 우측에 상주시킨다. */
+.sk-tray {
+  position: fixed;
+  left: var(--sk-facade-w);
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px var(--sk-pad);
+  background: var(--sk-ink);
+  color: #efeae1;
+  transform: translateY(100%);
+  transition: transform 0.36s var(--sk-ease);
+}
+.sk-tray[data-open] {
+  transform: none;
+}
+.sk-tray p {
+  margin: 0;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.78rem;
+  color: rgba(239, 234, 225, 0.6);
+}
+.sk-tray ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 8px;
+}
+.sk-tray li button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.76rem;
+  color: #efeae1;
+}
+.sk-tray li img {
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+.sk-tray .sk-go {
+  margin-left: auto;
+  padding: 9px 18px;
+  border-radius: 3px;
+  background: var(--sk-iron);
+  color: #fff;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ── 상세 뷰 — 축을 뒤집는다 ────────────────────────────────
+ * 그리드를 버리고, 좁은 좌정렬 텍스트 컬럼 사이사이에 풀블리드 소재
+ * 이미지가 끼어들어 흐름을 끊는다. 중앙 정렬이 아니다. */
+.sk-detail {
+  padding-bottom: 120px;
+}
+.sk-dhead {
+  padding: clamp(30px, 4vw, 60px) var(--sk-pad) clamp(22px, 3vw, 36px);
+  border-bottom: 1px solid var(--sk-line);
+}
+.sk-dback {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.76rem;
+  color: var(--sk-iron);
+}
+.sk-dhead h1 {
+  margin: 14px 0 0;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+.sk-dhead h1 span {
+  display: block;
+  margin-top: 8px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: var(--sk-dim);
+}
+
+/* 좁은 텍스트 컬럼. 좌정렬이고, 중앙 래퍼가 아니다 — 왼쪽 여백만 고정. */
+.sk-col {
+  max-inline-size: 58ch;
+  padding: clamp(30px, 4vw, 54px) var(--sk-pad) 0;
+}
+.sk-col h2 {
+  margin: 0;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: clamp(1.3rem, 2.2vw, 1.85rem);
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+}
+.sk-col p {
+  margin: 16px 0 0;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.95;
+  color: var(--sk-dim);
+}
+.sk-col p b {
+  color: var(--sk-ink);
+  font-weight: 500;
+}
+.sk-eye {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sk-iron);
+  margin: 0 0 12px;
+}
+
+/* 풀블리드 — 텍스트 컬럼의 흐름을 끊는다 */
+.sk-bleed {
+  margin-top: clamp(24px, 3vw, 40px);
+}
+.sk-bleed img {
+  width: 100%;
+}
+.sk-cap {
+  padding: 10px var(--sk-pad) 0;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.76rem;
+  line-height: 1.7;
+  color: var(--sk-dim);
+}
+
+/* ── 절단면 대조 — 이 편의 척추 ─────────────────────────────
+ * 업계 관행은 스펙·인증이 중반에 오지만 여기서는 절단면을 최상단으로
+ * 끌어올리고 스펙을 하단으로 밀었다. 06과 갈리는 지점이 정확히 이 순서다. */
+.sk-cut {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--sk-line);
+  margin-top: clamp(24px, 3vw, 40px);
+  border-block: 1px solid var(--sk-line);
+}
+.sk-cut figure {
+  margin: 0;
+  background: var(--sk-card);
+}
+.sk-cut figcaption {
+  padding: 14px var(--sk-pad) 18px;
+}
+.sk-cut h3 {
+  margin: 0;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1.05rem;
+}
+.sk-cut h3 em {
+  font-style: normal;
+  color: var(--sk-iron);
+}
+.sk-cut p {
+  margin: 8px 0 0;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: var(--sk-dim);
+}
+
+/* ── 그레이징 라이트 시뮬레이터 (훅) ────────────────────────
+ * 06은 '파라미터 선택 → 수치표·곡선'이었다. 여기는 수치가 0이고
+ * 광학만 바뀐다. 마감재 바이어의 실제 1번 질문 — "우리 현장 조명에서도
+ * 이렇게 보이나" — 에 답하는 도구다. 사진은 한 장뿐이고 나머지는 CSS다.
+ */
+.sk-sim {
+  margin-top: clamp(24px, 3vw, 40px);
+  border-top: 1px solid var(--sk-line);
+}
+.sk-stage {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  background: var(--sk-facade);
+}
+.sk-stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 입사각 — 각도가 낮을수록(그레이징) 방향성 그라디언트가 강해져
+   표면 요철이 드러난다. 실제 석재 검수에서 쓰는 기법 그대로다. */
+.sk-graze {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    var(--sk-dir, 100deg),
+    rgba(0, 0, 0, calc(0.62 * var(--sk-g, 1))),
+    rgba(0, 0, 0, 0) 42%,
+    rgba(255, 255, 255, calc(0.5 * var(--sk-g, 1)))
+  );
+  mix-blend-mode: overlay;
+  transition: background 0.12s linear;
+}
+/* 색온도 — 조명의 색이 소재 톤을 어떻게 밀어내는지 */
+.sk-kelvin {
+  position: absolute;
+  inset: 0;
+  background: var(--sk-kt, transparent);
+  mix-blend-mode: soft-light;
+  transition: background-color 0.36s var(--sk-ease);
+}
+.sk-simctl {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 40px);
+  padding: 20px var(--sk-pad) 0;
+  align-items: start;
+}
+.sk-simctl label {
+  display: block;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.78rem;
+  color: var(--sk-dim);
+  margin-bottom: 10px;
+}
+.sk-simctl label b {
+  color: var(--sk-ink);
+  font-weight: 600;
+}
+.sk-range {
+  width: 100%;
+  accent-color: var(--sk-iron);
+}
+.sk-kbtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sk-kbtns button {
+  padding: 7px 12px;
+  border: 1px solid var(--sk-line);
+  border-radius: 3px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.78rem;
+  color: var(--sk-dim);
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+.sk-kbtns button[aria-pressed="true"] {
+  border-color: var(--sk-iron);
+  color: var(--sk-iron);
+}
+
+/* ── 배열·줄눈 시뮬 ─────────────────────────────────────────
+ * 배열 세 가지 × 줄눈색 세 가지 = 아홉 장면. 전부 CSS repeat + gap이다.
+ * 사진은 한 장도 늘지 않는다. */
+.sk-bond {
+  margin-top: clamp(24px, 3vw, 40px);
+  border-top: 1px solid var(--sk-line);
+}
+.sk-bondview {
+  height: clamp(220px, 30vw, 380px);
+  overflow: hidden;
+  background: var(--sk-grout, #e6e0d5);
+  transition: background-color 0.3s var(--sk-ease);
+  display: grid;
+  gap: var(--sk-joint, 3px);
+  grid-auto-rows: minmax(0, 1fr);
+}
+.sk-bondrow {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 22%;
+  gap: var(--sk-joint, 3px);
+  transform: translateX(calc(-1 * var(--sk-off, 0) * 1%));
+}
+.sk-bondrow img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sk-bondctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 3vw, 40px);
+  padding: 20px var(--sk-pad) 0;
+}
+.sk-swatchbtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid var(--sk-line);
+}
+.sk-swatchbtn[aria-pressed="true"] {
+  outline: 2px solid var(--sk-iron);
+  outline-offset: 2px;
+}
+
+/* ── 표 ───────────────────────────────────────────────────── */
+.sk-table {
+  margin-top: clamp(24px, 3vw, 40px);
+  border-top: 1px solid var(--sk-ink);
+}
+.sk-table div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 13px var(--sk-pad);
+  border-bottom: 1px solid var(--sk-hair);
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.88rem;
+}
+.sk-table dt {
+  color: var(--sk-dim);
+}
+.sk-table dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.sk-table dd:last-child {
+  color: var(--sk-dim);
+  font-size: 0.82rem;
+}
+
+/* 다운로드 — 실측: 각 파일 용량을 병기한다 */
+.sk-dl {
+  margin-top: clamp(24px, 3vw, 40px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  background: var(--sk-line);
+  border-block: 1px solid var(--sk-line);
+}
+.sk-dl a {
+  background: var(--sk-card);
+  padding: 16px var(--sk-pad);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: background-color 0.2s;
+}
+.sk-dl a:hover {
+  background: #f7f4ef;
+}
+.sk-dl b {
+  display: block;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.sk-dl span {
+  display: block;
+  margin-top: 5px;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.74rem;
+  color: var(--sk-dim);
+}
+
+/* 전환 3분기 */
+.sk-cta {
+  margin-top: clamp(30px, 4vw, 60px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1px;
+  background: var(--sk-ink);
+  border-block: 1px solid var(--sk-ink);
+}
+.sk-cta div {
+  background: var(--sk-ink);
+  color: #efeae1;
+  padding: 24px var(--sk-pad) 28px;
+}
+.sk-cta h3 {
+  margin: 0;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+}
+.sk-cta p {
+  margin: 8px 0 16px;
+  font-family: "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 300;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  color: rgba(239, 234, 225, 0.6);
+}
+.sk-cta button {
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sk-card);
+  border-bottom: 1px solid var(--sk-iron);
+  padding-bottom: 2px;
+}
+
+.sk-foot {
+  padding: 30px var(--sk-pad) 0;
+  font-family: "Schibsted Grotesk", var(--font-kr), sans-serif;
+  font-size: 0.74rem;
+  line-height: 1.8;
+  color: var(--sk-dim);
+}
+
+/* ── 반응형 ───────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .sk-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .sk-site {
+    --sk-facade-w: 0px;
+  }
+  .sk-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* 좁은 화면에서 필터 파사드는 접히는 상단 블록이 된다 */
+  .sk-facade {
+    position: static;
+    max-height: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--sk-line);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0 24px;
+  }
+  .sk-facade h2 {
+    grid-column: 1 / -1;
+  }
+  .sk-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sk-tray {
+    left: 0;
+  }
+  .sk-cut,
+  .sk-simctl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .sk-table div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .sk-table dd:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── reduced-motion ────────────────────────────────────────
+ * 이 페이지에서 움직이는 것은 전부 광학(밝기·채도·색)이라 위치가 바뀌는
+ * 애니메이션이 없다. 그래도 전이 자체를 줄인다. 스와치는 처음부터
+ * 조명이 들어온 상태로 둔다 — 어두운 채로 남으면 소재를 못 읽는다. */
+@media (prefers-reduced-motion: reduce) {
+  .sk-site *,
+  .sk-site *::before,
+  .sk-site *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .sk-swatch::after {
+    opacity: 0;
+  }
+}

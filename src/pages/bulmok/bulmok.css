@@ -1,0 +1,1020 @@
+/*
+ * 불목 S1 — 크라우드펀딩 실전 상세페이지 (09)
+ *
+ * 앞의 여덟 편과 이 페이지의 근본적인 차이: 이건 브랜드 랜딩이 아니라
+ * 와디즈 스토리 에디터 안에 그대로 들어가는 상세페이지다. 그래서 조판을
+ * 우리가 고르지 않았다 — 플랫폼이 정해둔 걸 실측해서 따랐다.
+ *
+ * 실측 근거 (2026-08-02, 1600×1000 뷰포트에서 실 DOM 계측):
+ *   와디즈  content-width 1280 / gap 48 / 좌 스토리 740 / 우 리워드 478
+ *   텀블벅  xl:w-[1040] / gap 38 / 좌 650(콘텐츠 620) / 우 선물 352
+ *   이미지  가로 1024px 이하 권장, JPG·JPEG·PNG·GIF
+ *   조판    통이미지 금지 · 영상형 이미지에 텍스트 금지 · 본문 왼쪽 정렬 강제
+ *
+ * 05·06이 같아 보였던 원인(중앙 max-width 래퍼 + 섹션 배경 교대 + 등폭 카드
+ * 그리드 + translateY 리빌 + IBM Plex Mono)을 이 파일은 하나도 쓰지 않는다:
+ *
+ *   ✗ max-width + margin-inline:auto 유동 래퍼  → 740px/478px 고정 px 2분할
+ *   ✗ .sec 배경 modifier 교대                   → 스토리 컬럼은 흰 종이 한 장
+ *   ✗ 등폭 3·4열 카드 그리드                    → 스토리 안에 그리드가 0개
+ *   ✗ 상단 sticky nav + backdrop-blur           → 우측 sticky 리워드 레일
+ *   ✗ translateY(16px) 스태거 리빌              → 리빌 없음(아래 설명)
+ *   ✗ IBM Plex Mono / Space Grotesk             → DM Sans + DM Mono
+ *
+ * 리빌을 뺀 것은 게을러서가 아니다. 와디즈 스토리에는 스크롤 리빌이
+ * 존재할 수 없다 — 에디터가 텍스트·이미지·외부 영상 URL만 받기 때문이다.
+ * 리빌을 넣으면 "와디즈에 그대로 붙는다"는 이 페이지의 주장이 거짓이 된다.
+ * 움직이는 것은 전부 포폴 크롬(.bm-bar)과 '확장 랜딩' 모드 안에만 둔다.
+ */
+
+/* ── 토큰 ─────────────────────────────────────────────────── */
+.bm-site {
+  /* 배경은 렌더의 웜 샌드 배경에서 그대로 가져왔다. 근사흑 3편·순백 2편으로
+     명도가 편중된 시리즈에서 이 자리는 비어 있었다. */
+  --bm-paper: #e6e0d6;
+  --bm-sheet: #ffffff;
+  --bm-ink: #191713;
+  --bm-dim: rgba(25, 23, 19, 0.56);
+  --bm-faint: rgba(25, 23, 19, 0.34);
+  --bm-line: rgba(25, 23, 19, 0.13);
+  --bm-hair: rgba(25, 23, 19, 0.07);
+
+  /* 티타늄 열변색 인디고. 02(#ff4d00)·04(골드)·06(틸)·07(플럼)과 겹치지 않는다. */
+  --bm-tint: #4b4a9e;
+  /* 2차 연소 화염. 강조가 아니라 '한 번 더 탄다'는 사실의 색이다. */
+  --bm-flame: #6d86e8;
+  /* 1차 연소. 면색으로 쓰면 02가 되므로 도해 안에서만 쓴다. */
+  --bm-ember: #c0603a;
+
+  /*
+   * 실측값. 미디어쿼리로 유동하는 값이 아니라 DOM에 숫자로 박힌 값이다.
+   *
+   * 두 에이전트가 각각 재서 748/52/488과 740/48/478이 나왔다. 전자는
+   * 스크린샷 2배 환산(±10px), 후자는 실 DOM의 getBoundingClientRect와
+   * 클래스명(content-width-1280)에서 나온 값이라 후자를 채택했다.
+   */
+  --bm-story: 740px;
+  --bm-rail: 478px;
+  --bm-gap: 48px;
+
+  --bm-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  background: var(--bm-paper);
+  color: var(--bm-ink);
+  font-family: var(--font-kr);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+.bm-site :focus-visible {
+  outline: 2px solid var(--bm-tint);
+  outline-offset: 3px;
+}
+.bm-site ::selection {
+  background: var(--bm-tint);
+  color: #fff;
+}
+.bm-site img {
+  display: block;
+  max-width: 100%;
+}
+.bm-site button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* 크롬 전용 활자. 스토리 본문에는 절대 쓰지 않는다 — 본문은 국내 커머스가
+   실제로 쓰는 Pretendard 17px/1.8이어야 재현이 성립한다. */
+.bm-ui {
+  font-family: "DM Sans", var(--font-kr), sans-serif;
+  letter-spacing: -0.01em;
+}
+.bm-num {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 포폴 크롬 ─────────────────────────────────────────────
+ * 이 페이지에서 유일하게 '우리 것'인 띠. 아래로 이어지는 전부는
+ * 와디즈의 것이라, 경계를 명확히 하려고 색을 뒤집었다.
+ */
+.bm-bar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--bm-ink);
+  color: #f4f1ea;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.bm-bar-in {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 10px clamp(16px, 3vw, 24px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.bm-back {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 234, 0.62);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+.bm-back:hover {
+  color: #f4f1ea;
+}
+.bm-bar-note {
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: rgba(244, 241, 234, 0.56);
+  flex: 1;
+  min-width: 0;
+}
+.bm-bar-note b {
+  color: #f4f1ea;
+  font-weight: 500;
+}
+
+/* 모드 스위치 — 이 페이지의 유일한 훅.
+   왼쪽이 기본값이다: 스토리는 원래 에디터 안에서 산다. */
+.bm-switch {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  flex: none;
+}
+.bm-switch button {
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: rgba(244, 241, 234, 0.66);
+  transition:
+    background-color 0.24s var(--bm-ease),
+    color 0.24s var(--bm-ease);
+}
+.bm-switch button[aria-pressed="true"] {
+  background: #f4f1ea;
+  color: var(--bm-ink);
+}
+
+/* ── 제작 배지 ─────────────────────────────────────────────
+ * 확장 모드에서만 붙는다. 어느 컷이 AI 스틸이고 어느 게 코드인지,
+ * 에디터 규격을 어떻게 맞췄는지를 컷 옆에 그대로 적는다.
+ * 결과물이 아니라 제작 시스템을 보여주는 장치다.
+ */
+.bm-tag {
+  display: none;
+  margin-top: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.bm-site[data-mode="wide"] .bm-tag {
+  display: flex;
+  animation: bm-tag-in 0.34s var(--bm-ease) both;
+  animation-delay: var(--td, 0s);
+}
+@keyframes bm-tag-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+.bm-tag b {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--bm-tint);
+  color: #fff;
+}
+.bm-tag b[data-k="svg"] {
+  background: var(--bm-ink);
+}
+.bm-tag span {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-size: 0.7rem;
+  color: var(--bm-faint);
+}
+
+/* ── 제작 회계 ─────────────────────────────────────────────
+ * 액자의 마지막 칸. 이 상세페이지가 무엇으로 만들어졌는지를 숫자로
+ * 닫는다. 여기까지 와야 '80만원짜리 포맷'이 아니라 '시스템'이 된다.
+ */
+.bm-acct {
+  background: var(--bm-ink);
+  color: #f4f1ea;
+}
+.bm-acct-in {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: clamp(30px, 4vw, 52px) clamp(16px, 3vw, 24px) clamp(40px, 5vw, 72px);
+}
+.bm-acct h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.bm-acct-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.bm-acct-grid div {
+  background: var(--bm-ink);
+  padding: 18px 20px 20px;
+}
+.bm-acct-grid dt {
+  font-size: 0.74rem;
+  color: rgba(244, 241, 234, 0.5);
+}
+.bm-acct-grid dd {
+  margin: 7px 0 0;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+.bm-acct-grid dd i {
+  font-style: normal;
+  font-size: 0.55em;
+  color: rgba(244, 241, 234, 0.5);
+  margin-left: 3px;
+}
+.bm-can {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.bm-can section {
+  background: var(--bm-ink);
+  padding: 16px 18px 18px;
+}
+.bm-can h3 {
+  margin: 0;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 234, 0.5);
+}
+.bm-can ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.bm-can li {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  padding-left: 18px;
+  position: relative;
+  color: rgba(244, 241, 234, 0.86);
+}
+.bm-can li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: "DM Mono", monospace;
+}
+.bm-can .yes li::before {
+  content: "+";
+  color: var(--bm-flame);
+}
+.bm-can .no li::before {
+  content: "−";
+  color: rgba(244, 241, 234, 0.38);
+}
+.bm-can .no li {
+  color: rgba(244, 241, 234, 0.5);
+}
+/* 실측 근거 한 줄. 앞이 아니라 여기 있어야 근거로 읽힌다. */
+.bm-acct-cite {
+  margin: 16px 0 0;
+  max-width: 68ch;
+  font-size: 0.76rem;
+  line-height: 1.8;
+  color: rgba(244, 241, 234, 0.42);
+}
+.bm-acct-cite code {
+  font-family: "DM Mono", monospace;
+  font-size: 0.94em;
+  color: rgba(244, 241, 234, 0.62);
+}
+.bm-can {
+  margin-top: 26px;
+}
+
+.bm-acct > .bm-acct-in > p {
+  margin: 20px 0 0;
+  max-width: 62ch;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  color: rgba(244, 241, 234, 0.62);
+}
+.bm-acct a {
+  color: var(--bm-flame);
+}
+
+/* ── 플랫폼 크롬 ───────────────────────────────────────────
+ * 메이커가 배치를 바꿀 수 없는 구역. 회색 바탕으로 눌러서
+ * '여기부터는 우리가 만든 게 아니다'를 시각으로 말한다.
+ */
+.bm-plat {
+  background: var(--bm-paper);
+  border-bottom: 1px solid var(--bm-line);
+}
+.bm-wrap {
+  width: min(1280px, 100%);
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 24px);
+}
+
+.bm-head {
+  padding: clamp(22px, 3vw, 34px) 0 clamp(16px, 2vw, 22px);
+  display: grid;
+  grid-template-columns: var(--bm-story) var(--bm-rail);
+  gap: var(--bm-gap);
+  align-items: start;
+}
+.bm-crumb {
+  font-size: 0.74rem;
+  color: var(--bm-dim);
+}
+.bm-maker {
+  margin: 10px 0 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--bm-tint);
+}
+.bm-title {
+  margin: 6px 0 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.34;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.bm-sub {
+  margin: 10px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--bm-dim);
+}
+.bm-heroshot {
+  margin-top: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ddd6ca;
+}
+.bm-heroshot img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+/* 달성 요약 — 실측 순서: 달성률 % → 모인금액 → 서포터 → 남은 기간 */
+.bm-stat b {
+  display: block;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2rem, 3.4vw, 2.7rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.bm-stat b i {
+  font-style: normal;
+  font-size: 0.42em;
+  margin-left: 4px;
+  color: var(--bm-dim);
+}
+.bm-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 9px;
+  border-radius: 3px;
+  background: var(--bm-tint);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  vertical-align: 6px;
+}
+.bm-meter {
+  margin-top: 12px;
+  height: 3px;
+  background: var(--bm-hair);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.bm-meter span {
+  display: block;
+  height: 100%;
+  background: var(--bm-tint);
+}
+.bm-facts {
+  margin: 16px 0 0;
+  display: grid;
+  gap: 9px;
+}
+.bm-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.83rem;
+}
+.bm-facts dt {
+  color: var(--bm-dim);
+}
+.bm-facts dd {
+  margin: 0;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 데모 고지. 05에서 세운 원칙 — 실적 숫자는 예시임을 반드시 밝힌다. */
+.bm-demo {
+  margin-top: 14px;
+  padding: 9px 12px;
+  border: 1px dashed var(--bm-line);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--bm-faint);
+}
+
+/* 탭바 — 실측 결과 탭 전환은 좌측 컬럼만 갈아끼운다.
+   우측 리워드 패널과 상단 달성률 블록은 그대로 남는다. */
+.bm-tabs {
+  display: flex;
+  gap: 2px;
+  border-top: 1px solid var(--bm-line);
+}
+.bm-tabs button {
+  padding: 14px 20px;
+  font-size: 0.87rem;
+  font-weight: 500;
+  color: var(--bm-dim);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.bm-tabs button[aria-selected="true"] {
+  color: var(--bm-ink);
+  border-bottom-color: var(--bm-ink);
+}
+
+/* ── 본체 2분할 ────────────────────────────────────────────── */
+.bm-body {
+  display: grid;
+  grid-template-columns: var(--bm-story) var(--bm-rail);
+  gap: var(--bm-gap);
+  align-items: start;
+  padding-bottom: 80px;
+}
+
+/* 좌: 스토리 컬럼. 흰 종이 한 장이고, 안에 그리드가 없다. */
+.bm-story {
+  background: var(--bm-sheet);
+  padding: clamp(28px, 3vw, 44px) clamp(20px, 2.4vw, 36px) 56px;
+  /* 국내 커머스 상세의 실측 조판: 17px / 1.8 */
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+/*
+ * 스토리 블록. 이미지 블록과 왼쪽 정렬 텍스트 블록이 교대로 세로로만
+ * 쌓이고, 섹션 구분은 오직 여백으로 한다 — 실측 문법 그대로.
+ * 텀블벅 실측: section+section 39px, article+article 52px.
+ */
+.bm-blk + .bm-blk {
+  margin-top: 52px;
+}
+.bm-no {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-size: 0.76rem;
+  color: var(--bm-tint);
+  letter-spacing: 0.04em;
+}
+.bm-h {
+  margin: 8px 0 0;
+  font-size: 24px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0d0d0d;
+}
+.bm-p {
+  margin: 20px 0 0;
+  font-size: 16px;
+  line-height: 28px;
+}
+.bm-p b {
+  font-weight: 600;
+  background: linear-gradient(transparent 62%, rgba(75, 74, 158, 0.16) 0);
+}
+.bm-fig {
+  margin-top: 24px;
+}
+.bm-fig img {
+  width: 100%;
+  border-radius: 3px;
+  background: #ddd6ca;
+}
+.bm-cap {
+  margin: 9px 0 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--bm-faint);
+}
+/* 가운데 짧은 구분선. 텀블벅 실측 hr{width:20%;margin:0 auto 40px} */
+.bm-hr {
+  width: 20%;
+  margin: 44px auto 0;
+  border: 0;
+  border-top: 1px solid var(--bm-line);
+}
+
+/* 스펙표 — 본문은 1컬럼인데 표만 그리드로 이탈한다(실측 공통 문법) */
+.bm-spec {
+  margin-top: 24px;
+  border-top: 1px solid var(--bm-ink);
+}
+.bm-spec div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--bm-hair);
+  font-size: 0.9rem;
+}
+.bm-spec dt {
+  color: var(--bm-dim);
+}
+.bm-spec dd {
+  margin: 0;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 일정 */
+.bm-sched {
+  margin-top: 24px;
+  display: grid;
+  gap: 0;
+}
+.bm-sched div {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 16px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--bm-hair);
+  font-size: 0.9rem;
+}
+.bm-sched span:first-child {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  color: var(--bm-dim);
+}
+
+/* FAQ — 아코디언 하나가 스토리 안 유일한 인터랙션이고,
+   이건 와디즈 에디터가 아니라 우리가 얹은 것이라 밖에서만 산다.
+   에디터 안에서는 전부 펼쳐진 정적 문단이 된다. */
+.bm-faq {
+  margin-top: 24px;
+  border-top: 1px solid var(--bm-ink);
+}
+.bm-faq > div {
+  border-bottom: 1px solid var(--bm-hair);
+}
+.bm-faq h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.6;
+  padding: 16px 2px;
+}
+.bm-faq button {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+.bm-faq button span:first-child {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  color: var(--bm-tint);
+  font-size: 0.82rem;
+}
+.bm-faq p {
+  margin: 0;
+  padding: 0 2px 18px 32px;
+  font-size: 0.92rem;
+  line-height: 1.85;
+  color: var(--bm-dim);
+}
+
+/* ── 우: sticky 리워드 레일 ─────────────────────────────────
+ * 07은 좌측 레일이었고 저건 내비였다. 이건 우측이고 결제다.
+ */
+.bm-rail {
+  position: sticky;
+  top: 56px;
+  display: grid;
+  gap: 10px;
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+.bm-rw {
+  background: var(--bm-sheet);
+  border: 1px solid var(--bm-line);
+  border-radius: 5px;
+  padding: 16px 17px;
+  text-align: left;
+  display: block;
+  width: 100%;
+  transition:
+    border-color 0.2s var(--bm-ease),
+    box-shadow 0.2s var(--bm-ease);
+}
+.bm-rw:hover {
+  border-color: var(--bm-faint);
+}
+.bm-rw[aria-pressed="true"] {
+  border-color: var(--bm-tint);
+  box-shadow: inset 0 0 0 1px var(--bm-tint);
+}
+/* 버튼 안의 자식이 전부 span이라 기본값이 인라인이다 — 명시하지 않으면
+   재고 라벨과 리워드명이 한 줄에 붙는다. */
+.bm-rw-stock {
+  display: block;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-size: 0.7rem;
+  color: var(--bm-faint);
+}
+.bm-rw-name {
+  display: block;
+  margin-top: 7px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.bm-rw-name em {
+  font-style: normal;
+  color: var(--bm-tint);
+}
+.bm-rw-price {
+  margin-top: 9px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.bm-rw-price b {
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.16rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.bm-rw-price s {
+  font-size: 0.8rem;
+  color: var(--bm-faint);
+}
+.bm-rw ul {
+  margin: 11px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+.bm-rw li {
+  font-size: 0.79rem;
+  line-height: 1.55;
+  color: var(--bm-dim);
+  padding-left: 10px;
+  position: relative;
+}
+.bm-rw li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--bm-faint);
+}
+.bm-rw-flag {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(75, 74, 158, 0.1);
+  color: var(--bm-tint);
+  font-size: 0.66rem;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+.bm-cta {
+  margin-top: 2px;
+  padding: 15px;
+  border-radius: 5px;
+  background: var(--bm-tint);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+}
+.bm-railnote {
+  font-size: 0.72rem;
+  line-height: 1.65;
+  color: var(--bm-faint);
+  padding: 0 2px;
+}
+
+/* ── 확장 랜딩 모드 ─────────────────────────────────────────
+ * 와디즈 밖에서만 가능한 것들. 켜지면 (1) 도해가 움직이고
+ * (2) 두께 구성기가 살아나고 (3) 확장 블록이 컬럼 폭을 넘는다.
+ *
+ * 이 모드가 이 페이지의 판매 논리다: ESSENTIAL·STANDARD는 왼쪽,
+ * SIGNATURE는 오른쪽. 말로 설명하지 않고 토글 한 번으로 보여준다.
+ */
+.bm-only {
+  margin-top: 20px;
+  padding: 13px 15px;
+  border-radius: 4px;
+  border: 1px solid var(--bm-line);
+  background: rgba(75, 74, 158, 0.045);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--bm-dim);
+}
+.bm-only b {
+  color: var(--bm-tint);
+  font-weight: 600;
+}
+
+/* 확장 모드에서 컬럼 밖으로 번지는 블록. 고정폭 컬럼이 깨지는 순간이
+   곧 "에디터를 벗어났다"는 신호다. */
+.bm-site[data-mode="wide"] .bm-bleed {
+  margin-inline: calc(-1 * clamp(20px, 2.4vw, 36px));
+}
+.bm-bleed {
+  transition: margin 0.42s var(--bm-ease);
+}
+
+/* 두께 구성기 */
+.bm-gauge {
+  margin-top: 24px;
+}
+.bm-gauge-row {
+  display: flex;
+  gap: 8px;
+}
+.bm-gauge-row button {
+  flex: 1;
+  padding: 12px 10px;
+  border: 1px solid var(--bm-line);
+  border-radius: 4px;
+  text-align: center;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+}
+.bm-gauge-row button[aria-pressed="true"] {
+  border-color: var(--bm-tint);
+  background: rgba(75, 74, 158, 0.07);
+}
+.bm-gauge-row button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+.bm-gauge-row b {
+  display: block;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+.bm-gauge-row span {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.74rem;
+  color: var(--bm-dim);
+}
+.bm-gauge-out {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--bm-line);
+  border: 1px solid var(--bm-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bm-gauge-out div {
+  background: var(--bm-sheet);
+  padding: 13px 14px;
+}
+.bm-gauge-out dt {
+  font-size: 0.74rem;
+  color: var(--bm-dim);
+}
+.bm-gauge-out dd {
+  margin: 5px 0 0;
+  font-family: "DM Mono", var(--font-kr), monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.02rem;
+}
+
+/* ── 공기 유로 도해 ─────────────────────────────────────────
+ * 이미지 모델이 종단면을 끝내 못 그려서 SVG로 직접 그렸다.
+ * 06에서 세운 원칙과 같다 — 렌더에 글자를 넣지 않고, 도해는 코드로.
+ * 덤으로 2KB고, 확장 모드에서 공기가 실제로 흐른다.
+ */
+.bm-dia {
+  margin-top: 24px;
+  background: var(--bm-paper);
+  border-radius: 4px;
+  padding: 20px;
+}
+.bm-dia svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.bm-dia-legend {
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 0.76rem;
+  color: var(--bm-dim);
+}
+.bm-dia-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.bm-dia-legend i {
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+/* 흐름 애니메이션은 확장 모드에서만. 에디터 안에서는 정지한 도면이다. */
+.bm-flow {
+  stroke-dasharray: 7 9;
+  stroke-dashoffset: 0;
+}
+.bm-site[data-mode="wide"] .bm-flow {
+  animation: bm-draw 1.5s linear infinite;
+}
+@keyframes bm-draw {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+/* ── 환불·정책 탭 ───────────────────────────────────────────
+ * 실측 결과 이건 메이커가 쓰는 글이 아니라 별도 URL의 플랫폼 고정
+ * 탭이다. 그래서 스토리와 다른 조판을 준다 — 문체도 '~해요'다.
+ */
+.bm-policy h3 {
+  margin: 32px 0 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+.bm-policy h3:first-child {
+  margin-top: 0;
+}
+.bm-policy ul {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+.bm-policy li {
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--bm-dim);
+}
+.bm-policy > p {
+  margin: 14px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.85;
+  color: var(--bm-dim);
+}
+
+/* ── 반응형 ─────────────────────────────────────────────────
+ * 실측: 두 플랫폼 모두 1080px 미만은 완전 1컬럼이고, 그 이상에서만
+ * 2컬럼 + sticky 레일이 붙는다. 그 경계를 그대로 따른다.
+ */
+/*
+ * 좁아져도 스토리 컬럼은 740px 그대로 둔다. 이 페이지가 본문에서
+ * "컬럼 폭 740px"이라고 말하는데 실제로 늘어나면 그 문장이 거짓이 되고,
+ * 이 편의 논지 자체가 무너진다. 줄어드는 건 리워드 레일뿐이다.
+ */
+@media (max-width: 1330px) {
+  .bm-site {
+    --bm-rail: minmax(0, 478px);
+    --bm-gap: 32px;
+  }
+}
+
+/*
+ * 실측: 와디즈·텀블벅 둘 다 1080px 미만은 완전 1컬럼이고, 그 이상에서만
+ * 2컬럼 + sticky 레일이 붙는다(텀블벅 스타일시트의 @media(min-width:1080px)가
+ * 53회로 지배적). 여기서부터는 스토리도 유동이 되는 게 플랫폼 동작이다.
+ */
+@media (max-width: 1080px) {
+  .bm-site {
+    --bm-story: minmax(0, 1fr);
+  }
+  .bm-head,
+  .bm-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .bm-summary {
+    margin-top: 26px;
+  }
+  .bm-body {
+    padding-bottom: 0;
+  }
+  /* 레일은 사라지고 하단 고정 바가 된다 — 모바일 커머스의 표준 처리 */
+  .bm-rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    margin-top: 32px;
+    padding-bottom: 96px;
+  }
+  .bm-story {
+    padding-inline: clamp(16px, 4vw, 28px);
+  }
+  .bm-bar-note {
+    display: none;
+  }
+  .bm-tabs button {
+    padding: 13px 14px;
+    font-size: 0.83rem;
+  }
+  .bm-gauge-out {
+    grid-template-columns: 1fr;
+  }
+  .bm-can {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .bm-spec div,
+  .bm-sched div {
+    grid-template-columns: 104px 1fr;
+    gap: 12px;
+  }
+}
+
+/* ── reduced-motion ─────────────────────────────────────────
+ * 07은 --m 곱셈을, 05·06은 트랜지션 무력화를 썼다. 여기서는 움직이는
+ * 게 애초에 셋뿐이라(스위치·블리드·유로) 그것만 정직하게 끈다.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .bm-site *,
+  .bm-site *::before,
+  .bm-site *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
