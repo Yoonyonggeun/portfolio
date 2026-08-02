@@ -270,10 +270,18 @@
     linear-gradient(180deg, rgba(4, 5, 7, 0.72) 0%, rgba(4, 5, 7, 0.15) 32%, rgba(4, 5, 7, 0.9) 88%),
     linear-gradient(90deg, rgba(4, 5, 7, 0.8) 0%, rgba(4, 5, 7, 0) 62%);
 }
+/*
+ * 새벽 모드는 베일이 더 두꺼워야 한다. 어두운 화면에서는 밝은 글자가 어두운
+ * 영상 위에서 알아서 떠오르지만, 반대로 뒤집으면 어두운 글자가 밝아진 영상의
+ * 하이라이트와 명도가 붙는다. 0.4로는 왼쪽 카피 영역이 절반밖에 안 덮여
+ * 프레임에 따라 제목이 묻혔다. 글자가 놓이는 왼쪽만 종이에 가깝게 올리고,
+ * 오른쪽은 그대로 열어둬 영상이 계속 보이게 한다.
+ */
 :root[data-theme="light"] .nk-hero-veil {
+  opacity: 0.62;
   background:
     linear-gradient(180deg, rgba(231, 229, 225, 0.6) 0%, rgba(231, 229, 225, 0.1) 30%, rgba(231, 229, 225, 0.94) 88%),
-    linear-gradient(90deg, rgba(231, 229, 225, 0.86) 0%, rgba(231, 229, 225, 0) 62%);
+    linear-gradient(90deg, rgba(231, 229, 225, 0.94) 0%, rgba(231, 229, 225, 0) 62%);
 }
 :root[data-theme="light"] .nk-hero-video {
   filter: saturate(0.5) contrast(0.95) brightness(1.22);
@@ -1441,5 +1449,35 @@
   }
   .nk-note {
     opacity: 1;
+  }
+}
+
+/* ── View Transition ──────────────────────────────────────── */
+/*
+ * 이 블록이 없으면 원형 마스크 위로 브라우저 기본 크로스페이드가 겹쳐
+ * 전환이 흐릿하게 뭉갠다. 옛 화면은 아래에 가만히 깔려 있어야 원 안쪽만
+ * 새 테마로 보인다. html[data-theme]로 스코프해서 08 라우트 밖으로
+ * 새지 않게 한다 — 반지름 값은 useTheme.ts가 클릭 좌표로 계산한다.
+ */
+html[data-theme]::view-transition-image-pair(root) {
+  isolation: auto;
+}
+html[data-theme]::view-transition-old(root),
+html[data-theme]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-theme]::view-transition-old(root) {
+  z-index: 1;
+}
+html[data-theme]::view-transition-new(root) {
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme]::view-transition-group(*),
+  html[data-theme]::view-transition-old(root),
+  html[data-theme]::view-transition-new(root) {
+    animation: none !important;
   }
 }

@@ -103,6 +103,13 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   cursor: pointer;
+  transition:
+    color 0.2s,
+    transform 0.14s ease-out;
+}
+
+.scroll-scrub__route-button:active {
+  transform: scale(0.96);
 }
 
 .scroll-scrub__route-button:hover,

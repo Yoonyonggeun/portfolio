@@ -1,4 +1,4 @@
-import { useTheme } from "./theme";
+import type { Theme } from "./useTheme";
 
 /*
  * 해 ↔ 달 모프. 아이콘을 크로스페이드하지 않고 도형 하나를 변형시킨다:
@@ -11,8 +11,13 @@ import { useTheme } from "./theme";
 
 const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
-export default function ThemeToggle({ className = "" }: { className?: string }) {
-  const { theme, toggle } = useTheme();
+type Props = {
+  theme: Theme;
+  onToggle: (origin: { clientX: number; clientY: number }) => void;
+  className?: string;
+};
+
+export default function ThemeToggle({ theme, onToggle, className = "" }: Props) {
   const isDark = theme === "dark";
 
   return (
@@ -23,7 +28,7 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
       // "눌림/안눌림"보다 "새벽으로 전환"이 훨씬 명확하다.
       aria-label={isDark ? "새벽 모드로 전환" : "심야 모드로 전환"}
       title={isDark ? "새벽 모드" : "심야 모드"}
-      onClick={(e) => toggle({ clientX: e.clientX, clientY: e.clientY })}
+      onClick={(e) => onToggle({ clientX: e.clientX, clientY: e.clientY })}
     >
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
         <mask id="nk-moon-mask">

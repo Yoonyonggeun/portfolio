@@ -343,6 +343,9 @@ function Xray() {
   const { ref, progress } = useSectionProgress<HTMLDivElement>();
   const reduced = useMemo(prefersReduced, []);
   const x = Math.min(1, Math.max(0, (progress - 0.25) / 0.5));
+  /* 캡션도 이미지와 같은 진행값으로 교차한다. 0.45~0.55 구간에서만 섞인다. */
+  const t = Math.min(1, Math.max(0, (x - 0.45) / 0.1));
+  const blend = reduced ? 1 : t * t * (3 - 2 * t);
   return (
     <div className="kl-xray" ref={ref}>
       <div className="kl-xray-sticky">
@@ -355,14 +358,13 @@ function Xray() {
           />
         </div>
         <p className="kl-xray-cap">
-          {x < 0.5 && !reduced ? (
-            <>계속 스크롤해 안을 들여다보세요.</>
-          ) : (
-            <>
-              <b>맞춤 설계 드라이버와 K1 칩</b>이 한 몸으로 움직이며 고해상도 3차원
-              사운드를 만들고, 재생 왜곡은 들리지 않는 수준까지 낮춥니다.
-            </>
-          )}
+          <span aria-hidden={blend >= 0.5} style={{ opacity: 1 - blend }}>
+            계속 스크롤해 안을 들여다보세요.
+          </span>
+          <span aria-hidden={blend < 0.5} style={{ opacity: blend }}>
+            <b>맞춤 설계 드라이버와 K1 칩</b>이 한 몸으로 움직이며 고해상도 3차원
+            사운드를 만들고, 재생 왜곡은 들리지 않는 수준까지 낮춥니다.
+          </span>
         </p>
       </div>
     </div>
@@ -445,7 +447,10 @@ function ExperienceTabs() {
             <img key={t.id} src={t.img} alt={t.label} className={t.id === tab ? "on" : ""} />
           ))}
         </div>
-        <p className="kl-tab-desc">{active.desc}</p>
+        {/* key로 리마운트해 탭 전환을 뒤 이미지의 크로스페이드와 맞춘다. */}
+        <p className="kl-tab-desc" key={tab}>
+          {active.desc}
+        </p>
       </div>
     </section>
   );

@@ -1,0 +1,1277 @@
+/*
+ * 무렵 01 — 포터블 테이블 램프 (07)
+ *
+ * 05·06이 같은 페이지로 읽힌 원인은 IA가 아니라 레이아웃 축이었다.
+ * 두 페이지가 공유하던 관용구를 이 파일에서는 하나도 쓰지 않는다:
+ *
+ *   ✗ max-width + margin-inline:auto 중앙 래퍼   → 좌측 레일 + 전폭 우측 열
+ *   ✗ .sec 한 클래스에 배경 modifier 교대        → 배경 밴드 교대 없음
+ *   ✗ eyebrow → h2 → lead 좌단 정렬 머리         → 섹션마다 정렬축이 바뀜
+ *   ✗ sticky 상단 nav + backdrop-blur(8px)       → 세로 레일
+ *   ✗ 등폭 3·4열 카드 + 4/3 이미지 + radius 14px → 비대칭 오프셋 + 혼합 비율
+ *   ✗ translateY(16px) / cubic-bezier(.2,.7,.15,1) / --d:i*.06s
+ *                                                → clip-path 가로 와이프
+ *   ✗ --m: 1|0 곱셈 reduced-motion               → 미디어쿼리에서 직접 무력화
+ *   ✗ IBM Plex Mono                              → Inter Tight tabular-nums
+ *   ✗ 다크 밴드 CTA → 더 어두운 푸터             → CTA·푸터가 레일에 상주
+ */
+
+/* ── 토큰 ─────────────────────────────────────────────────── */
+/*
+ * light-dark()는 color-scheme이 잡혀 있어야 동작한다. 그 선언은
+ * src/index.css(즉시 로드)에 있다 — 이 파일은 lazy 청크라 첫 페인트에 늦다.
+ */
+.mu-site {
+  --mu-paper: light-dark(#efedf2, #141020);
+  --mu-veil: light-dark(#e4e0ec, #1e1830);
+  --mu-rail: light-dark(#dcd7e8, #0e0a18);
+  --mu-ink: light-dark(#221e2a, #ede8f2);
+  --mu-dim: light-dark(#6b6478, rgba(237, 232, 242, 0.56));
+  --mu-line: light-dark(rgba(34, 30, 42, 0.13), rgba(237, 232, 242, 0.14));
+
+  /* 클릭 가능한 것은 전부 이 색. 앰버는 UI 면색으로 절대 쓰지 않는다 —
+     쓰는 순간 02 KONTAKT(#ff4d00)·04 AURUM(골드)와 붙는다. */
+  --mu-plum: light-dark(#5b4a72, #a992d1);
+
+  /* 앰버는 언제나 발광으로만 등장한다: gradient / box-shadow / text-shadow */
+  --mu-glow: light-dark(#f2a65a, #ffc178);
+
+  /* 발광 강도. 05 섹션의 밝기 단계 칩이 --mu-step을 바꾸면 페이지 전체가
+     같이 어두워진다 — 스펙 UI가 조명 시연이 되는 지점. */
+  --mu-emit-base: light-dark(0.14, 1);
+  --mu-step: 1;
+  --mu-emit: calc(var(--mu-emit-base) * var(--mu-step));
+
+  --mu-pad: clamp(20px, 4vw, 72px);
+  --mu-railw: clamp(216px, 20vw, 300px);
+  --mu-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  background: var(--mu-paper);
+  color: var(--mu-ink);
+  font-family: var(--font-kr);
+  /* 05(1.75)·06(1.7)보다 성기게 — 문단 덩어리의 회색도가 달라진다 */
+  line-height: 1.9;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+
+  display: grid;
+  grid-template-columns: var(--mu-railw) minmax(0, 1fr);
+  min-height: 100dvh;
+  transition: background-color 0.4s var(--mu-ease);
+}
+
+.mu-site :focus-visible {
+  outline: 2px solid var(--mu-plum);
+  outline-offset: 3px;
+}
+.mu-site ::selection {
+  background: var(--mu-plum);
+  color: var(--mu-paper);
+}
+.mu-site img,
+.mu-site video {
+  display: block;
+  max-width: 100%;
+}
+
+/* ── 조판 ─────────────────────────────────────────────────── */
+/* 디스플레이: 라틴·숫자 Instrument Serif, 국문 Noto Serif KR.
+   05·06이 쓴 Space Grotesk·Archivo·IBM Plex Mono는 한 곳도 쓰지 않는다. */
+.mu-display {
+  font-family: "Instrument Serif", "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  line-height: 0.96;
+  /* 세리프에 -0.025em(05·06의 값)을 주면 뭉친다 */
+  letter-spacing: -0.005em;
+}
+
+.mu-ui {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "case" 1;
+}
+
+/* 라틴 라벨만 트래킹을 준다. 국문에 라틴용 트래킹을 주면 읽는 속도가 떨어진다. */
+.mu-tag {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--mu-dim);
+}
+.mu-tag.lat {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.mu-h {
+  font-family: "Instrument Serif", "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.005em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.mu-lead {
+  margin: 1.1rem 0 0;
+  max-width: 46ch;
+  color: var(--mu-dim);
+  font-size: clamp(1rem, 1.4vw, 1.16rem);
+  line-height: 1.75;
+}
+
+/* 다크에서만 헤드라인이 빛을 흘린다. 같은 조판이 두 모드에서 다른 물성을 갖는다. */
+[data-theme="dark"] .mu-display,
+[data-theme="dark"] .mu-h {
+  text-shadow: 0 0 28px rgba(255, 193, 120, calc(0.22 * var(--mu-step)));
+}
+
+/* ── 리빌 ─────────────────────────────────────────────────── */
+/* 05·06은 translateY + opacity였다. 07은 가로 와이프 — 빛이 번지듯 열린다. */
+/*
+ * 열림 표시는 class가 아니라 [data-rv]다. class로 달면 className이 상태에 따라
+ * 바뀌는 요소에서 React가 리렌더 때 문자열을 통째로 다시 쓰면서 같이 지워진다.
+ * data 속성은 React가 렌더하지 않으므로 건드리지 않는다.
+ */
+.mu-site .wipe {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.9s var(--mu-ease) var(--wd, 0s);
+}
+.mu-site .wipe[data-rv] {
+  clip-path: inset(0 0 0 0);
+}
+
+.mu-site .rise {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.7s var(--mu-ease) var(--wd, 0s),
+    transform 0.7s var(--mu-ease) var(--wd, 0s);
+}
+.mu-site .rise[data-rv] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── 좌측 레일 ────────────────────────────────────────────── */
+/*
+ * 브랜드·섹션 인덱스·테마 다이얼·CTA·푸터가 전부 여기 있다.
+ * 그래서 페이지 끝에 다크 밴드 CTA와 푸터를 다시 쌓을 이유가 없어진다.
+ */
+.mu-rail {
+  grid-column: 1;
+  align-self: start; /* stretch면 sticky가 움직일 여백이 없다 */
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  background: var(--mu-rail);
+  border-right: 1px solid var(--mu-line);
+  padding: clamp(18px, 2.4vw, 30px) clamp(16px, 1.8vw, 26px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 40;
+  transition: background-color 0.4s var(--mu-ease);
+}
+
+.mu-back {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mu-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.mu-back:hover {
+  color: var(--mu-plum);
+}
+
+.mu-brand {
+  display: block;
+  margin-top: 2px;
+}
+.mu-brand b {
+  display: block;
+  font-family: "Instrument Serif", "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1.72rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.mu-brand i {
+  display: block;
+  margin-top: 6px;
+  font-style: normal;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mu-dim);
+}
+
+/* 섹션 인덱스 01–09 */
+.mu-idx {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* 9개가 낮은 화면에서 잘리면 안 된다. 줄어들되 넘치면 스크롤. */
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.mu-idx::-webkit-scrollbar {
+  display: none;
+}
+.mu-idx li {
+  position: relative;
+}
+.mu-idx a {
+  display: grid;
+  grid-template-columns: 2.4ch 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding: 5px 0 5px 12px;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  color: var(--mu-dim);
+  text-decoration: none;
+  transition: color 0.24s;
+}
+/* 영문 부제는 활성 항목에서만 펼친다 — 세로 공간을 8줄 아끼면서
+   활성 항목이 스스로 커지는 동작이 마커와 함께 읽힌다. */
+.mu-idx a em {
+  display: none;
+  font-style: normal;
+  font-size: 0.66rem;
+  opacity: 0.75;
+}
+.mu-idx li.on a em {
+  display: block;
+}
+.mu-idx a:hover,
+.mu-idx li.on a {
+  color: var(--mu-ink);
+}
+/* 활성 마커는 motion의 layoutId가 미끄러진다 */
+.mu-mark {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--mu-plum);
+}
+[data-theme="dark"] .mu-mark {
+  box-shadow: 0 0 8px var(--mu-plum);
+}
+
+.mu-railfoot {
+  margin-top: auto;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 테마 다이얼 — 스위치가 아니라 디밍 다이얼의 형태 */
+.mu-dial {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mu-slot {
+  position: relative;
+  width: 26px;
+  height: 62px;
+  flex: none;
+  border: 1px solid var(--mu-line);
+  border-radius: 13px;
+  background: var(--mu-veil);
+  padding: 3px;
+  cursor: pointer;
+  touch-action: none;
+}
+.mu-knob {
+  position: absolute;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mu-ink);
+  cursor: grab;
+}
+.mu-knob:active {
+  cursor: grabbing;
+}
+[data-theme="dark"] .mu-knob {
+  background: var(--mu-glow);
+  box-shadow: 0 0 14px var(--mu-glow);
+}
+.mu-dialread b {
+  display: block;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.mu-dialread i {
+  display: block;
+  font-style: normal;
+  font-size: 0.66rem;
+  color: var(--mu-dim);
+  margin-top: 1px;
+}
+
+.mu-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--mu-plum);
+  border-radius: 2px;
+  color: var(--mu-plum);
+  background: transparent;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.24s,
+    color 0.24s;
+}
+.mu-cta:hover {
+  background: var(--mu-plum);
+  color: var(--mu-paper);
+}
+
+.mu-railnote {
+  flex: none;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.6rem;
+  line-height: 1.55;
+  color: var(--mu-dim);
+  border-top: 1px solid var(--mu-line);
+  padding-top: 10px;
+}
+
+/* ── 우측 열 ──────────────────────────────────────────────── */
+.mu-main {
+  grid-column: 2;
+  min-width: 0;
+  position: relative;
+}
+/* 가독폭은 페이지가 아니라 텍스트 블록에만 국소 적용한다 */
+.mu-text {
+  max-width: 62ch;
+}
+
+.mu-sec {
+  padding: clamp(72px, 11vw, 156px) var(--mu-pad);
+  position: relative;
+}
+
+/* 다크에서 페이지 전체에 깔리는 앰비언트. --mu-step에 반응한다. */
+.mu-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--mu-emit);
+  background: radial-gradient(
+    120% 80% at 60% 24%,
+    rgba(255, 193, 120, 0.09),
+    transparent 62%
+  );
+  transition: opacity 0.6s var(--mu-ease);
+}
+[data-theme="light"] .mu-ambient {
+  display: none;
+}
+
+/* ── 01 히어로 ────────────────────────────────────────────── */
+.mu-hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-content: end;
+  padding: var(--mu-pad);
+  isolation: isolate;
+}
+.mu-hero-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 사진은 한 장뿐이고, 테마가 바꾸는 건 그 위에 얹힌 처리 레이어다 */
+[data-theme="dark"] .mu-hero-img {
+  filter: brightness(0.88) saturate(1.06);
+}
+.mu-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--mu-paper) 88%, transparent) 0%,
+    color-mix(in srgb, var(--mu-paper) 30%, transparent) 42%,
+    transparent 72%
+  );
+}
+/* 디퓨저 위치에 얹히는 발광. 라이트에서는 거의 안 보이고 다크에서 켜진다. */
+.mu-emit {
+  position: absolute;
+  z-index: -1;
+  width: 46%;
+  aspect-ratio: 1;
+  left: var(--emit-x, 50%);
+  top: var(--emit-y, 50%);
+  translate: -50% -50%;
+  pointer-events: none;
+  opacity: var(--mu-emit);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--mu-glow) 42%, transparent) 0%,
+    transparent 66%
+  );
+  filter: blur(var(--mu-blur, 28px));
+  transition: opacity 0.6s var(--mu-ease);
+}
+[data-theme="dark"] .mu-emit {
+  --mu-blur: 44px;
+}
+
+.mu-hero-txt {
+  grid-column: 2 / 9;
+  position: relative;
+}
+.mu-hero h1 {
+  margin: 0.6rem 0 0;
+  font-family: "Instrument Serif", "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  /* 05·06의 상한(≈38px)을 깬다. 이 스케일 하나로 첫 스크린샷이 달라진다. */
+  font-size: clamp(2.6rem, 7vw, 5.4rem);
+  line-height: 0.96;
+  letter-spacing: -0.005em;
+}
+.mu-hero .mu-lead {
+  margin-top: 1.4rem;
+}
+.mu-credit {
+  margin: 1.6rem 0 0;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.74rem;
+  color: var(--mu-dim);
+}
+.mu-jump {
+  position: absolute;
+  right: var(--mu-pad);
+  bottom: var(--mu-pad);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--mu-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--mu-line);
+  padding-bottom: 4px;
+  transition: border-color 0.2s;
+}
+.mu-jump:hover {
+  border-color: var(--mu-plum);
+}
+
+/* ── 02 빛 개념 (영상) ────────────────────────────────────── */
+/* 영상은 우측 열을 전폭으로 뚫고 나가고, 텍스트는 그 아래 우측 정렬.
+   05·06은 모든 head가 예외 없이 좌단 정렬이라 이 한 번으로 실루엣이 갈린다. */
+.mu-concept {
+  padding-right: 0;
+}
+.mu-vidwrap {
+  position: relative;
+  margin-right: 0;
+  background: var(--mu-veil);
+  padding: 10px;
+  border: 1px solid var(--mu-line);
+  border-radius: 2px;
+  transition:
+    background-color 0.4s var(--mu-ease),
+    padding 0.4s var(--mu-ease),
+    border-color 0.4s var(--mu-ease);
+}
+/* 다크에서는 액자가 사라지고 영상이 지면에 녹는다 */
+[data-theme="dark"] .mu-vidwrap {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+  -webkit-mask-image: radial-gradient(115% 105% at 50% 50%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(115% 105% at 50% 50%, #000 62%, transparent 100%);
+}
+.mu-vidwrap video {
+  width: 100%;
+  height: auto;
+  border-radius: 1px;
+}
+.mu-vidbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  padding-right: var(--mu-pad);
+}
+.mu-kread {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--mu-glow);
+  flex: none;
+}
+[data-theme="light"] .mu-kread {
+  color: var(--mu-ink);
+}
+.mu-track {
+  flex: 1;
+  height: 1px;
+  background: var(--mu-line);
+  position: relative;
+}
+.mu-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--mu-plum);
+  transform-origin: left;
+}
+.mu-replay {
+  flex: none;
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: var(--mu-plum);
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.mu-concept-txt {
+  padding: 0 var(--mu-pad);
+  margin-top: clamp(34px, 5vw, 60px);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+.mu-concept-txt > div {
+  grid-column: 6 / 13;
+  text-align: right;
+}
+.mu-concept-txt .mu-lead {
+  margin-left: auto;
+}
+
+/* ── 03 두 얼굴 (사진만으로 말하는 구간) ──────────────────── */
+/*
+ * 같은 프레임을 세 상태로 갈아끼운다. 리드 문단이 없고 텍스트는 헤드라인과
+ * 칩 라벨뿐 — 설명하지 않고 보여준다는 게 이 섹션의 유일한 규칙이다.
+ */
+.mu-home {
+  padding-inline: 0;
+}
+.mu-homehead {
+  padding-inline: var(--mu-pad);
+  margin-bottom: clamp(26px, 3.4vw, 46px);
+}
+.mu-swap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--mu-veil);
+}
+.mu-swap img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mu-swapbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  padding: 14px var(--mu-pad) 0;
+}
+
+/* 가로 드래그 갤러리 — embla. 04의 정지된 격자와 리듬이 달라진다. */
+.mu-gal {
+  margin-top: clamp(34px, 4.5vw, 64px);
+  padding-left: var(--mu-pad);
+  overflow: hidden;
+  cursor: grab;
+}
+.mu-gal:active {
+  cursor: grabbing;
+}
+.mu-gal-track {
+  display: flex;
+  gap: clamp(10px, 1.4vw, 18px);
+}
+.mu-gal-slide {
+  flex: 0 0 min(46%, 440px);
+  min-width: 0;
+  margin: 0;
+}
+.mu-gal-slide img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 2px;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+[data-theme="dark"] .mu-gal-slide img {
+  filter: brightness(0.92) saturate(1.04);
+}
+.mu-gal-slide figcaption {
+  margin-top: 9px;
+}
+
+/* ── 04 마감 4종 (카드) ───────────────────────────────────── */
+.mu-finish {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(20px, 3vw, 44px);
+}
+.mu-finish-head {
+  grid-column: 1 / 5;
+  position: sticky;
+  top: clamp(40px, 12vh, 120px);
+  align-self: start;
+}
+.mu-cards {
+  grid-column: 5 / 13;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 28px);
+  align-items: start;
+}
+.mu-card {
+  position: relative;
+  display: block;
+  border: 1px solid var(--mu-line);
+  /* 05(14px)도 06(0)도 아닌 값 */
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--mu-veil);
+  text-align: left;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    box-shadow 0.4s var(--mu-ease),
+    border-color 0.4s var(--mu-ease);
+}
+/*
+ * 마감 컷은 옅은 라일락 무배경이라 라이트 모드 지면(#efedf2)과 명도가 거의
+ * 같다. 다크에서는 사진이 그대로 튀지만 라이트에서는 카드 경계가 사라진다.
+ * → 라이트에서만 테두리를 진하게 하고 그림자를 얹어 카드로 세운다.
+ */
+[data-theme="light"] .mu-card {
+  border-color: rgba(34, 30, 42, 0.16);
+  box-shadow: 0 14px 34px -22px rgba(34, 30, 42, 0.42);
+}
+[data-theme="light"] .mu-card:hover {
+  box-shadow: 0 20px 44px -22px rgba(34, 30, 42, 0.5);
+}
+.mu-card-fig {
+  position: relative;
+  overflow: hidden;
+  /* 사진 자체의 배경보다 반 톤 어두운 판을 깔아 이미지 가장자리를 세운다 */
+  background: var(--mu-rail);
+}
+/* 비율을 섞는다. 05·06은 카드 이미지가 전부 4/3 하나였다. */
+.mu-card:nth-child(1) .mu-card-fig {
+  aspect-ratio: 3 / 4;
+}
+.mu-card:nth-child(2) .mu-card-fig {
+  aspect-ratio: 1 / 1;
+}
+.mu-card:nth-child(3) .mu-card-fig {
+  aspect-ratio: 16 / 9;
+}
+.mu-card:nth-child(4) .mu-card-fig {
+  aspect-ratio: 4 / 5;
+}
+.mu-card-fig img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 1;
+  transition: transform 1s cubic-bezier(0.35, 0.01, 0, 0.99);
+}
+/* 배경이 아래에서 차오르고(빠르게), 이미지가 밀린다(느리게).
+   두 이징이 다른 게 핵심 — 조명 페이지에서 '빛이 차오르는' 은유가 된다. */
+.mu-card-fig::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--mu-glow) 26%, transparent),
+    transparent 72%
+  );
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.6s cubic-bezier(0.63, 0, 0, 0.99);
+}
+.mu-card:hover .mu-card-fig::before,
+.mu-card:focus-visible .mu-card-fig::before {
+  transform: scaleY(1);
+}
+.mu-card:hover .mu-card-fig img,
+.mu-card:focus-visible .mu-card-fig img {
+  transform: scale(1.1);
+}
+/* 다크에서만 카드가 발광한다. 각 카드가 디퓨저 좌표를 인라인으로 갖는다. */
+.mu-card-fig::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  width: 62%;
+  aspect-ratio: 1;
+  left: var(--emit-x, 50%);
+  top: var(--emit-y, 42%);
+  translate: -50% -50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--mu-glow) 34%, transparent) 0%,
+    transparent 64%
+  );
+  filter: blur(30px);
+  transition: opacity 0.6s var(--mu-ease);
+}
+[data-theme="dark"] .mu-card-fig::after {
+  opacity: var(--mu-step);
+}
+.mu-card-cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  background: var(--mu-paper);
+  border-top: 1px solid var(--mu-line);
+}
+.mu-card-cap b {
+  font-family: "Instrument Serif", "Noto Serif KR", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: 1.16rem;
+}
+.mu-card-cap span {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.68rem;
+  color: var(--mu-dim);
+}
+.mu-badge {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  background: var(--mu-plum);
+  color: var(--mu-paper);
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+
+/* ── 05 밝기가 곧 시간 ────────────────────────────────────── */
+.mu-dialsec {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(20px, 3vw, 44px);
+}
+.mu-dialsec > .mu-dialhead {
+  grid-column: 1 / 6;
+}
+.mu-bars {
+  grid-column: 6 / 13;
+  margin-top: 6px;
+}
+.mu-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 26px;
+}
+.mu-chip {
+  padding: 8px 15px;
+  border: 1px solid var(--mu-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--mu-dim);
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background-color 0.2s;
+}
+.mu-chip[aria-pressed="true"] {
+  border-color: var(--mu-plum);
+  color: var(--mu-paper);
+  background: var(--mu-plum);
+}
+/* 05(.jb-fee)·06(.mf-spec)의 border-collapse 표 관용구를 쓰지 않는다 */
+.mu-bar {
+  display: grid;
+  grid-template-columns: 5ch minmax(0, 1fr) 9ch 7ch;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--mu-line);
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.86rem;
+}
+.mu-bar > b {
+  font-weight: 500;
+}
+.mu-bar > .mu-barwrap {
+  height: 6px;
+  background: var(--mu-veil);
+  position: relative;
+  overflow: hidden;
+}
+.mu-barwrap i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--mu-plum);
+}
+[data-theme="dark"] .mu-bar.on .mu-barwrap i {
+  background: var(--mu-glow);
+  box-shadow: 0 0 12px var(--mu-glow);
+}
+.mu-bar > span {
+  color: var(--mu-dim);
+  text-align: right;
+}
+.mu-bar.on {
+  color: var(--mu-ink);
+}
+.mu-bar:not(.on) {
+  opacity: 0.42;
+}
+.mu-plain {
+  margin: 26px 0 0;
+  padding: 16px 18px;
+  border-left: 2px solid var(--mu-plum);
+  background: var(--mu-veil);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+/* ── 06 사양 (헤어라인 색인) ──────────────────────────────── */
+.mu-specsec .mu-spechead {
+  text-align: right;
+  margin-left: auto;
+  max-width: 46ch;
+}
+.mu-facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  margin: 26px 0 34px;
+}
+/* 카드·상자를 전부 지우고 항목당 한 줄짜리 행으로 */
+.mu-row {
+  display: grid;
+  grid-template-columns: 4ch minmax(0, 1fr) auto 88px;
+  align-items: center;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--mu-line);
+  font-size: 0.94rem;
+  transition: opacity 0.3s;
+}
+.mu-row > b {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  color: var(--mu-dim);
+  font-weight: 400;
+  transition: color 0.2s;
+}
+.mu-row:hover > b {
+  color: var(--mu-plum);
+}
+.mu-row > em {
+  font-style: normal;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--mu-dim);
+}
+.mu-row svg {
+  width: 88px;
+  height: 34px;
+  overflow: visible;
+  color: var(--mu-dim);
+  transition:
+    transform 0.35s var(--mu-ease),
+    color 0.2s;
+}
+.mu-row:hover svg {
+  transform: scale(1.18);
+  color: var(--mu-plum);
+}
+.mu-row.dim {
+  opacity: 0.38;
+}
+
+/* ── 08 구성품·가격 ───────────────────────────────────────── */
+/* 이 섹션에서만 좌우 비중이 뒤집힌다 — 페이지 끝에서 리듬이 한 번 꺾인다 */
+.mu-kit {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(20px, 3vw, 48px);
+  align-items: center;
+}
+.mu-kitfig {
+  grid-column: 1 / 7;
+  position: relative;
+}
+.mu-kitfig img {
+  width: 100%;
+  transition: transform 0.6s var(--mu-ease);
+}
+.mu-kitfig.zoom img {
+  transform: scale(1.06);
+}
+.mu-hot {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 1px solid var(--mu-plum);
+  background: color-mix(in srgb, var(--mu-plum) 16%, transparent);
+  opacity: 0.35;
+  transition:
+    opacity 0.3s,
+    scale 0.3s var(--mu-ease);
+}
+.mu-hot.on {
+  opacity: 1;
+  scale: 1.35;
+}
+.mu-kittxt {
+  grid-column: 7 / 13;
+}
+.mu-items {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+}
+.mu-items li {
+  display: grid;
+  grid-template-columns: 2.6ch 1fr;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--mu-line);
+  font-size: 0.94rem;
+  cursor: default;
+  transition: color 0.2s;
+}
+.mu-items li b {
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--mu-dim);
+}
+.mu-items li:hover {
+  color: var(--mu-plum);
+}
+.mu-price {
+  margin-top: 30px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mu-price s {
+  color: var(--mu-dim);
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.mu-price b {
+  font-family: "Instrument Serif", var(--font-kr), serif;
+  font-weight: 400;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  line-height: 1;
+}
+.mu-off {
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--mu-plum);
+  color: var(--mu-paper);
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.72rem;
+}
+.mu-rewards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 22px;
+}
+.mu-reward {
+  border: 1px solid var(--mu-line);
+  border-radius: 2px;
+  padding: 13px;
+  font-size: 0.82rem;
+}
+.mu-reward b {
+  display: block;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.96rem;
+  margin-top: 5px;
+}
+.mu-refund {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin-top: 24px;
+  background: var(--mu-line);
+  border: 1px solid var(--mu-line);
+}
+.mu-refund > div {
+  background: var(--mu-paper);
+  padding: 14px 16px;
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+.mu-refund h4 {
+  margin: 0 0 6px;
+  font-family: "Inter Tight", var(--font-kr), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--mu-dim);
+  font-weight: 500;
+}
+
+/* ── 09 마무리 ────────────────────────────────────────────── */
+/* 밴드가 아니라 여백. 배경색 교대 없음, 지면색 그대로. */
+.mu-end {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: var(--mu-pad);
+  position: relative;
+}
+.mu-endfig {
+  position: relative;
+  width: min(340px, 62vw);
+}
+.mu-endfig img {
+  width: 100%;
+}
+.mu-end p {
+  margin: 0;
+  text-align: center;
+  color: var(--mu-dim);
+  font-size: 0.95rem;
+}
+
+/* ── 모바일 ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .mu-site {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* 레일이 상단으로 접히는 게 아니라 하단 고정 바로 내려간다 */
+  .mu-rail {
+    grid-column: 1;
+    position: fixed;
+    inset: auto 0 0 0;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    border-right: 0;
+    border-top: 1px solid var(--mu-line);
+    z-index: 60;
+  }
+  .mu-brand i,
+  .mu-idx,
+  .mu-railnote,
+  .mu-back {
+    display: none;
+  }
+  .mu-brand b {
+    font-size: 1.14rem;
+  }
+  .mu-railfoot {
+    margin: 0 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  .mu-slot {
+    width: 52px;
+    height: 24px;
+    border-radius: 12px;
+  }
+  .mu-knob {
+    top: 2px;
+    left: 2px;
+  }
+  .mu-dialread i {
+    display: none;
+  }
+  .mu-main {
+    grid-column: 1;
+    padding-bottom: 62px;
+  }
+  /* 히어로는 100svh 안에서 바닥 정렬이라 .mu-main의 패딩이 안 먹는다.
+     하단 바 높이만큼 직접 띄워야 크레딧 줄이 가리지 않는다. */
+  .mu-hero {
+    padding-bottom: calc(var(--mu-pad) + 74px);
+  }
+  .mu-hero-txt {
+    grid-column: 1 / 13;
+  }
+  .mu-jump {
+    display: none;
+  }
+  .mu-concept-txt > div {
+    grid-column: 1 / 13;
+    text-align: left;
+  }
+  .mu-concept-txt .mu-lead {
+    margin-left: 0;
+  }
+  .mu-swap {
+    aspect-ratio: 4 / 3;
+  }
+  .mu-swapbar {
+    justify-content: flex-start;
+  }
+  .mu-gal-slide {
+    flex: 0 0 min(78%, 400px);
+  }
+  .mu-finish-head,
+  .mu-cards,
+  .mu-dialsec > .mu-dialhead,
+  .mu-bars,
+  .mu-kitfig,
+  .mu-kittxt {
+    grid-column: 1 / 13;
+  }
+  .mu-finish-head {
+    position: static;
+  }
+  .mu-spechead,
+  .mu-facets {
+    text-align: left;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  .mu-rewards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .mu-row {
+    grid-template-columns: 3ch minmax(0, 1fr) auto;
+  }
+  .mu-row svg {
+    display: none;
+  }
+  .mu-bar {
+    grid-template-columns: 4ch minmax(0, 1fr) 8ch;
+  }
+  .mu-bar > span:last-child {
+    display: none;
+  }
+  .mu-refund {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── reduced-motion ───────────────────────────────────────── */
+/* 05·06의 --m: 1→0 곱셈 기법은 쓰지 않는다. 필요한 규칙만 직접 끈다. */
+@media (prefers-reduced-motion: reduce) {
+  .mu-site .wipe,
+  .mu-site .rise {
+    transition: opacity 0.3s linear;
+    clip-path: none;
+    transform: none;
+    opacity: 1;
+  }
+  .mu-card-fig img,
+  .mu-card-fig::before,
+  .mu-kitfig img,
+  .mu-row svg {
+    transition: none;
+  }
+}
+
+/* ── Lenis ────────────────────────────────────────────────── */
+/* index.css의 html{scroll-behavior:smooth}와 충돌하면 앵커 점프가 두 번 튄다 */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ── View Transition ──────────────────────────────────────── */
+/*
+ * 이 두 블록이 없으면 원형 마스크 위로 브라우저 기본 크로스페이드가 겹쳐
+ * 전환이 흐릿하게 뭉갠다. html[data-theme]로 스코프해서 07 라우트 밖으로
+ * 새지 않게 한다.
+ */
+html[data-theme]::view-transition-image-pair(root) {
+  isolation: auto;
+}
+html[data-theme]::view-transition-old(root),
+html[data-theme]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}

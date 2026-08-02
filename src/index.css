@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;700&family=Archivo:wght@300;400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;700&family=Archivo:wght@300;400;500;600&family=Noto+Serif+KR:wght@300;400&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&display=swap");
 @import "tailwindcss";
 
 
@@ -24,6 +24,20 @@ body {
   }
 }
 
+/*
+ * 테마를 가진 페이지(무렵 07 · NOKTURN 08)의 스위치. 이 두 줄만 즉시 로드되는
+ * index.css에 두는 이유는 각 페이지 CSS가 lazy 청크라 첫 페인트에 늦기
+ * 때문이다. color-scheme이 잡혀야 light-dark()가 동작하고, 스크롤바·select
+ * 같은 UA 위젯도 같이 뒤집힌다. data-theme은 그 두 라우트에서만 붙으므로
+ * 명도가 고정된 나머지 여섯 페이지는 영향을 안 받는다.
+ */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 /* ============ Portfolio home tokens ============ */
 :root {
   --pf-paper: #f1f0ec;
@@ -43,72 +57,85 @@ body {
   letter-spacing: -0.02em;
 }
 
+/*
+ * IBM Plex Mono에는 한글 글리프가 없다. 한글 폰트를 폴백에 끼우지 않으면
+ * 시스템 고정폭으로 떨어져 글자마다 칸이 잡히고 '견 적  문 의'처럼 벌어진다.
+ * 라틴·숫자는 Plex Mono, 한글은 Pretendard로 간다.
+ */
 .pf-mono {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "IBM Plex Mono", var(--font-kr), monospace;
 }
 
-/* ============ 다크 모드 (포트폴리오 홈) ============
- * 작업 상세 페이지들은 각자의 브랜드 색을 그대로 유지한다 — 그게 그 작업의
- * 정체성이니까. 테마가 바뀌는 건 홈과 NOKTURN뿐이다.
- */
-:root[data-theme="dark"] {
-  --pf-paper: #101113;
-  --pf-ink: #eceae5;
-  --pf-dim: rgba(236, 234, 229, 0.56);
-  --pf-line: rgba(236, 234, 229, 0.15);
-}
-
-/* 테마 토글 기본형. NOKTURN 안에서는 nokturn.css가 자기 토큰으로 덮어쓴다. */
-.nk-themebtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  appearance: none;
-  cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.72rem;
+/* 한글 문장에 라틴용 트래킹을 그대로 주면 읽는 속도가 떨어진다. */
+.pf-label {
+  font-family: "IBM Plex Mono", var(--font-kr), monospace;
   letter-spacing: 0.08em;
-  color: var(--pf-ink);
-  background: transparent;
-  border: 1px solid var(--pf-line);
-  padding: 7px 14px 7px 11px;
-  border-radius: 999px;
+}
+
+/* ============ Home reveal ============ */
+/* 스크롤 진입용. 관찰은 Home.tsx의 useReveal이 담당한다. */
+.pf-rv {
   transition:
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-.nk-themebtn:hover {
-  border-color: var(--pf-ink);
-  transform: translateY(-1px);
-}
-.nk-themebtn-label {
-  font-family: var(--font-kr), sans-serif;
-  font-weight: 600;
+    opacity 0.7s cubic-bezier(0.2, 0.6, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.6, 0.2, 1);
+  transition-delay: var(--d, 0s);
 }
 
-/* ============ 테마 전환: 원형 확산 ============
- * View Transitions API가 옛 화면과 새 화면의 스냅샷을 겹쳐 준다. 기본
- * 크로스페이드를 끄고, 새 화면만 clip-path 원으로 열어젖힌다. 옛 화면은
- * 아래에 가만히 깔려 있으면 된다 — 그래야 원 안쪽만 새 테마로 보인다.
- * 반지름 값은 theme.tsx에서 클릭 좌표를 받아 계산한다.
+/*
+ * 숨김 상태는 .pf-js 안에서만 성립한다. 이 클래스는 index.html의 인라인
+ * 스크립트가 단다. 스크립트가 죽으면 숨김 규칙 자체가 적용되지 않으므로
+ * 카드는 리빌 없이 그냥 보인다 — 안 보이는 것보다 안 움직이는 게 낫다.
  */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-old(root) {
-  z-index: 1;
-}
-::view-transition-new(root) {
-  z-index: 2;
+.pf-js .pf-rv {
+  opacity: 0;
+  transform: translateY(24px);
 }
 
+.pf-js .pf-rv.pf-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* 히어로 전용. 첫 화면은 관찰자를 기다리지 않고 파싱 즉시 재생한다. */
+.pf-rise {
+  opacity: 0;
+  animation: pf-rise 0.7s cubic-bezier(0.2, 0.6, 0.2, 1) var(--d, 0s) forwards;
+}
+
+@keyframes pf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pf-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 이동은 없애고 페이드만 남긴다 — 등장 자체를 지우면 순서를 읽을 수 없다. */
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
+  .pf-rv {
+    transition-property: opacity;
+    transition-duration: 0.4s;
+  }
+
+  .pf-js .pf-rv {
+    transform: none;
+  }
+
+  .pf-rise {
+    animation-name: pf-fade;
+    animation-duration: 0.4s;
   }
 }
 

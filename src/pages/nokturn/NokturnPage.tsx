@@ -7,8 +7,8 @@ import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "motion/react";
 
 import { useSmoothScroll } from "../../lib/useSmoothScroll";
-import { useThemeDefault } from "../../lib/theme";
-import ThemeToggle from "../../lib/ThemeToggle";
+import { useTheme } from "./useTheme";
+import ThemeToggle from "./ThemeToggle";
 import { asset } from "./assets";
 import { FESTIVAL, FILMS, NOTES, PASSES } from "./data";
 import Lineup from "./Lineup";
@@ -341,9 +341,10 @@ function Passes() {
 /* ── 페이지 ─────────────────────────────────────────────────── */
 export default function NokturnPage() {
   useSmoothScroll();
-  // 이 영화제의 기본 상태는 '심야'다. OS가 라이트여도 처음엔 어둡게 연다.
-  // 방문자가 토글을 누른 적이 있으면 그 선택이 이긴다.
-  useThemeDefault("dark");
+  /* 테마는 이 페이지 안에서만 산다 — 언마운트하면 훅이 data-theme을 걷어낸다.
+     기본 상태는 '심야'다. OS가 라이트여도 처음엔 어둡게 열고, 방문자가 토글을
+     누른 적이 있으면 그 선택이 이긴다. */
+  const { theme, toggle } = useTheme();
 
   return (
     <div className="nk-site">
@@ -351,7 +352,7 @@ export default function NokturnPage() {
         <Link to="/" className="nk-rail-back">
           ← 포트폴리오
         </Link>
-        <ThemeToggle />
+        <ThemeToggle theme={theme} onToggle={toggle} />
       </div>
 
       <Hero />
