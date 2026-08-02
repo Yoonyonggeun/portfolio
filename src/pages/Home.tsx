@@ -24,6 +24,18 @@ type Project = {
 
 const projects: Project[] = [
   {
+    no: "11",
+    name: "중쇠 48",
+    category: "수동 커피 그라인더 · 홈카페",
+    year: "2026",
+    line: "축이 흔들리면, 입자가 흔들린다.",
+    desc: "끌면 열두 조각으로 벌어지고, 부품을 누르면 지시선이 뻗으며 왜 거기 있는지가 나온다. 단면은 도면처럼 잘린 자리를 막고 45° 해칭을 얹는다. 분해도 에셋은 0KB — 지오메트리를 코드가 만든다.",
+    tags: ["procedural 3D", "leader callouts", "section + hatch"],
+    image: "/assets/jungsoe/hero.webp",
+    href: "/work/jungsoe",
+    accent: "#1b4dd8",
+  },
+  {
     no: "10",
     name: "석리 石理",
     category: "포세린 슬래브 · 내수 B2B",

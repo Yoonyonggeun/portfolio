@@ -17,6 +17,7 @@ const MuryeopPage = lazy(() => import("./pages/muryeop/MuryeopPage"));
 const NokturnPage = lazy(() => import("./pages/nokturn/NokturnPage"));
 const BulmokPage = lazy(() => import("./pages/bulmok/BulmokPage"));
 const SeokriPage = lazy(() => import("./pages/seokri/SeokriPage"));
+const JungsoePage = lazy(() => import("./pages/jungsoe/JungsoePage"));
 
 const TITLES: Record<string, string> = {
   "/work/klang": "KLANG Pro — 소음은 지우고, 소리만 남기다",
@@ -29,6 +30,7 @@ const TITLES: Record<string, string> = {
   "/work/nokturn": "NOKTURN — 제3회 서울 국제 심야 단편영화제",
   "/work/bulmok": "불목 S1 — 접으면 봉투 두께, 펴면 연기가 없는 불",
   "/work/seokri": "석리 石理 — 표면이 아니라 잘린 면을 봅니다",
+  "/work/jungsoe": "중쇠 48 — 축이 흔들리면 입자가 흔들린다",
 };
 
 const HOME_TITLE = "PRODUCT FILM — 부수지 않고, 속을 보여준다";
@@ -64,6 +66,7 @@ export default function App() {
           <Route path="/work/nokturn" element={<NokturnPage />} />
           <Route path="/work/bulmok" element={<BulmokPage />} />
           <Route path="/work/seokri" element={<SeokriPage />} />
+          <Route path="/work/jungsoe" element={<JungsoePage />} />
         </Routes>
       </Suspense>
     </>

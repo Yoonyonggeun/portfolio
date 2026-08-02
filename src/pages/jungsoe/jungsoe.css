@@ -1,0 +1,1206 @@
+@import url("https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@300;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap");
+
+/*
+ * 중쇠 48 / JUNGSOE 48 — 수동 커피 그라인더 (11)
+ *
+ * 열 편이 공유하던 관용구를 다시 쓰지 않는다:
+ *   ✗ max-width + margin-inline:auto 중앙 래퍼
+ *        → 도면 시트. 좌측 기준선에 붙이고 오른쪽은 여백으로 비운다.
+ *          비어 있는 게 아니라 표제란이 앉는 자리다.
+ *   ✗ 섹션 배경 교대(.sec--dark 류)
+ *        → 시트 한 장. 바뀌는 건 배경이 아니라 시트 번호다.
+ *   ✗ translateY / clip-path / 채도 리빌
+ *        → stroke-dashoffset. 선이 좌→우로 그어지고 글자는 0px 움직인다.
+ *   ✗ IBM Plex Mono · DM Mono · Space Grotesk · Instrument Serif
+ *        → Saira Condensed(제도 레터링) + Spline Sans Mono(치수·주기)
+ *
+ * 팔레트: 시리즈 10편의 액센트가 민트·오렌지·근사흑·금·벽돌·올리브·라일락·
+ * 앰버·인디고·산화철이라 채도 높은 파랑만 비어 있었다. 도면이 원래 쓰는 색이다.
+ */
+
+.jn-site {
+  --jn-board: #dde3ea; /* 제도판 */
+  --jn-sheet: #f3f6f9; /* 시트 */
+  --jn-model: #d5dde6; /* 모델 스페이스 */
+  --jn-ink: #0e1216;
+  --jn-dim: #59646f;
+  --jn-line: #b6c2ce;
+  --jn-hair: rgba(14, 18, 22, 0.1);
+  --jn-blue: #1b4dd8;
+  --jn-blue-soft: rgba(27, 77, 216, 0.1);
+
+  --jn-disp: "Saira Condensed", var(--font-kr), sans-serif;
+  --jn-mono: "Spline Sans Mono", var(--font-kr), monospace;
+
+  --jn-mx: clamp(26px, 6vw, 108px);
+  --jn-ease: cubic-bezier(0.22, 0.8, 0.28, 1);
+
+  background: var(--jn-sheet);
+  color: var(--jn-ink);
+  min-height: 100dvh;
+  padding-bottom: 88px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+
+.jn-site :focus-visible {
+  outline: 2px solid var(--jn-blue);
+  outline-offset: 3px;
+}
+
+/* ── 상단 한 줄 ─────────────────────────────────────────────
+ * 09에서 배운 자리. 여기에 제약 설명이나 제작 노트를 올리지 않는다.
+ */
+.jn-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 11px var(--jn-mx);
+  background: color-mix(in srgb, var(--jn-sheet) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--jn-hair);
+  font-family: var(--jn-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+.jn-back {
+  color: var(--jn-blue);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.jn-top-t {
+  color: var(--jn-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 리빌 ───────────────────────────────────────────────────
+ * 잉크만 올라온다. transform은 어디에도 없다.
+ */
+.jn-rv {
+  opacity: 0;
+  transition: opacity 0.62s var(--jn-ease);
+}
+
+.jn-rv[data-drawn] {
+  opacity: 1;
+}
+
+.jn-rule-line line {
+  stroke: var(--jn-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 0.9s var(--jn-ease) 0.1s;
+}
+
+.jn-rv[data-drawn] .jn-rule-line line {
+  stroke-dashoffset: 0;
+}
+
+/* ── 공통 조판 ───────────────────────────────────────────── */
+.jn-sec {
+  padding: clamp(54px, 7vw, 104px) var(--jn-mx) clamp(40px, 5vw, 76px);
+  border-top: 1px solid var(--jn-hair);
+}
+
+.jn-sec-head {
+  margin-bottom: clamp(26px, 3vw, 44px);
+}
+
+.jn-rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.jn-rule-ko,
+.jn-rule-en {
+  font-family: var(--jn-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--jn-blue);
+}
+
+.jn-rule-en {
+  color: var(--jn-dim);
+  letter-spacing: 0.1em;
+}
+
+.jn-rule-line {
+  flex: 1;
+  height: 8px;
+  min-width: 40px;
+}
+
+.jn-h1 {
+  font-family: var(--jn-disp);
+  font-weight: 600;
+  font-size: clamp(42px, 7.4vw, 104px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  margin: 0.18em 0 0;
+}
+
+.jn-h2 {
+  font-family: var(--jn-disp);
+  font-weight: 600;
+  font-size: clamp(27px, 3.4vw, 46px);
+  line-height: 1.12;
+  margin: 0;
+  max-width: 22ch;
+}
+
+.jn-eyebrow {
+  font-family: var(--jn-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  color: var(--jn-blue);
+  margin: 0;
+}
+
+.jn-lead,
+.jn-sec-lead {
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.75;
+  color: var(--jn-dim);
+  max-width: 46ch;
+  margin: 20px 0 0;
+}
+
+.jn-sec-lead {
+  margin-top: 14px;
+}
+
+/* ── SHEET 1 · 표제 ────────────────────────────────────────
+ * 중앙 정렬 히어로가 아니다. 좌측 기준선에 붙이고 도면처럼 오른쪽에 형상을 둔다.
+ */
+.jn-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.78fr);
+  gap: clamp(28px, 4vw, 72px);
+  align-items: end;
+  padding: clamp(44px, 6vw, 90px) var(--jn-mx) clamp(40px, 5vw, 78px);
+}
+
+.jn-hero-spec {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: clamp(26px, 3vw, 42px) 0 0;
+  border-top: 1px solid var(--jn-line);
+}
+
+.jn-hero-spec > div {
+  flex: 1 1 128px;
+  padding: 12px 16px 12px 0;
+  border-right: 1px solid var(--jn-hair);
+}
+
+.jn-hero-spec > div:last-child {
+  border-right: 0;
+}
+
+.jn-hero-spec dt {
+  font-family: var(--jn-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--jn-dim);
+}
+
+.jn-hero-spec dd {
+  margin: 5px 0 0;
+  font-family: var(--jn-disp);
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.jn-hero-fig {
+  margin: 0;
+}
+
+.jn-hero-fig img,
+.jn-pair img,
+.jn-wide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--jn-model);
+  border: 1px solid var(--jn-hair);
+}
+
+.jn-hero-fig img {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+figcaption {
+  font-family: var(--jn-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--jn-dim);
+  margin-top: 9px;
+  line-height: 1.6;
+}
+
+figcaption b {
+  color: var(--jn-blue);
+  font-weight: 500;
+  margin-right: 7px;
+}
+
+/* ── SHEET 2 · 뷰포트 ──────────────────────────────────────── */
+.jn-sec-vp {
+  padding-bottom: clamp(28px, 3vw, 48px);
+}
+
+.jn-vp-wrap {
+  border: 1px solid var(--jn-line);
+  background: var(--jn-model);
+}
+
+.jn-vp {
+  position: relative;
+  height: clamp(460px, 74vh, 760px);
+  overflow: hidden;
+  /* 세로 제스처는 페이지에 넘긴다. 터치에서 분해는 스크럽 트랙이 맡는다. */
+  touch-action: pan-y;
+}
+
+.jn-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  display: block;
+}
+
+.jn-canvas.jn-grabbing {
+  cursor: grabbing;
+}
+
+.jn-vp-msg {
+  position: absolute;
+  inset: auto 0 50% 0;
+  text-align: center;
+  font-family: var(--jn-mono);
+  font-size: 12px;
+  color: var(--jn-dim);
+  margin: 0;
+}
+
+/* ── 지시선 ──────────────────────────────────────────────── */
+.jn-callouts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jn-leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.jn-leader {
+  fill: none;
+  stroke: var(--jn-blue);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+}
+
+.jn-dot {
+  fill: var(--jn-blue);
+  opacity: 0;
+}
+
+.jn-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0;
+  color: var(--jn-ink);
+  transition: color 0.2s linear;
+  will-change: transform, opacity;
+}
+
+.jn-label.jn-R {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.jn-balloon {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid var(--jn-blue);
+  border-radius: 50%;
+  font-family: var(--jn-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--jn-blue);
+  background: var(--jn-sheet);
+}
+
+.jn-label .jn-balloon {
+  position: absolute;
+  top: 4px;
+}
+
+.jn-label.jn-L .jn-balloon {
+  left: 8px;
+}
+
+.jn-label.jn-R .jn-balloon {
+  right: 8px;
+}
+
+.jn-lname {
+  font-family: var(--jn-disp);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.1;
+  padding-inline-start: 25px;
+}
+
+.jn-label.jn-R .jn-lname {
+  padding-inline-start: 0;
+  padding-inline-end: 25px;
+}
+
+.jn-len {
+  font-family: var(--jn-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--jn-dim);
+}
+
+.jn-label:hover .jn-lname,
+.jn-label.is-on .jn-lname {
+  color: var(--jn-blue);
+}
+
+.jn-label.is-on .jn-balloon {
+  background: var(--jn-blue);
+  color: #fff;
+}
+
+/* ── HUD ──────────────────────────────────────────────────
+ * 캔버스 위에 띄우지 않는다. 분해가 끝까지 가면 맨 아래 부품이 그대로
+ * 패널 뒤로 들어간다. 도킹한 툴바여야 모델이 쓸 세로가 온전해진다.
+ *
+ * 내용은 왼쪽에 몰아 둔다 — 오른쪽 아래는 고정 표제란이 지나가는 자리다.
+ */
+.jn-hud {
+  border-top: 1px solid var(--jn-line);
+  background: var(--jn-sheet);
+  padding: 9px 14px;
+}
+
+.jn-hud-in {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  max-width: 880px;
+}
+
+.jn-hud-scrub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.jn-play {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--jn-line);
+  background: var(--jn-sheet);
+  color: var(--jn-ink);
+  font-size: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s linear;
+}
+
+.jn-play:hover {
+  border-color: var(--jn-blue);
+  color: var(--jn-blue);
+}
+
+.jn-track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.jn-track-a,
+.jn-track-b,
+.jn-readout {
+  font-family: var(--jn-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--jn-dim);
+  white-space: nowrap;
+}
+
+.jn-readout {
+  flex: 0 0 34px;
+  text-align: right;
+  color: var(--jn-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.jn-track input[type="range"],
+.jn-detail-ctl input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  height: 20px;
+  background: none;
+  cursor: pointer;
+}
+
+.jn-track input[type="range"]::-webkit-slider-runnable-track,
+.jn-detail-ctl input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--jn-line);
+}
+
+.jn-track input[type="range"]::-moz-range-track,
+.jn-detail-ctl input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: var(--jn-line);
+}
+
+.jn-track input[type="range"]::-webkit-slider-thumb,
+.jn-detail-ctl input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 20px;
+  margin-top: -10px;
+  background: var(--jn-blue);
+  border-radius: 1px;
+}
+
+.jn-track input[type="range"]::-moz-range-thumb,
+.jn-detail-ctl input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 20px;
+  border: 0;
+  border-radius: 1px;
+  background: var(--jn-blue);
+}
+
+.jn-hud-views {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.jn-vbtn {
+  display: flex;
+  min-width: 62px;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--jn-disp);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--jn-dim);
+  transition: color 0.18s linear;
+}
+
+.jn-vbtn em {
+  font-family: var(--jn-mono);
+  font-size: 8.5px;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
+
+.jn-vbtn:hover {
+  color: var(--jn-ink);
+}
+
+.jn-vbtn.is-on {
+  color: var(--jn-blue);
+}
+
+.jn-sect {
+  margin-left: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--jn-hair);
+}
+
+/* ── 주기란 (뷰포트 아래) ─────────────────────────────────
+ * 오버레이로 띄우지 않는다. 부품을 고를 때마다 화면 위 요소가 나타났다
+ * 사라지면 모델을 가린다. 자리를 미리 잡아 두면 레이아웃도 안 흔들린다.
+ */
+.jn-note {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-height: 62px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--jn-line);
+  background: var(--jn-sheet);
+}
+
+.jn-note-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--jn-disp);
+  font-size: 19px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.jn-note-h em {
+  font-family: var(--jn-mono);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--jn-blue);
+}
+
+.jn-note-b,
+.jn-vp-hint {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--jn-dim);
+}
+
+.jn-vp-hint {
+  font-family: var(--jn-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+}
+
+/* ── SHEET 3 · 확대도 ──────────────────────────────────────── */
+.jn-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: clamp(24px, 3vw, 56px);
+  align-items: start;
+}
+
+.jn-detail-fig {
+  margin: 0;
+  border: 1px solid var(--jn-line);
+  background: var(--jn-model);
+}
+
+.jn-detail-fig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.jn-d-solid {
+  stroke: var(--jn-ink);
+  stroke-width: 1.4;
+  color: var(--jn-dim);
+  vector-effect: non-scaling-stroke;
+}
+
+.jn-d-dim {
+  stroke: var(--jn-blue);
+  stroke-width: 1;
+  color: var(--jn-blue);
+  fill: none;
+}
+
+.jn-d-dim text {
+  fill: var(--jn-blue);
+  stroke: none;
+  font-family: var(--jn-mono);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.jn-d-lead {
+  stroke: var(--jn-dim);
+  stroke-width: 1;
+  fill: none;
+}
+
+.jn-d-lead text {
+  fill: var(--jn-dim);
+  stroke: none;
+  font-family: var(--jn-mono);
+  font-size: 11.5px;
+}
+
+.jn-d-scale {
+  fill: var(--jn-dim);
+  font-family: var(--jn-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+}
+
+.jn-detail-ctl {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.jn-detail-read {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0;
+  font-family: var(--jn-disp);
+}
+
+.jn-detail-read b {
+  font-size: clamp(46px, 5vw, 66px);
+  font-weight: 600;
+  line-height: 0.9;
+  color: var(--jn-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.jn-detail-read span {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.jn-detail-read em {
+  margin-left: auto;
+  font-family: var(--jn-mono);
+  font-size: 12px;
+  font-style: normal;
+  color: var(--jn-dim);
+}
+
+.jn-brews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.jn-brew {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--jn-line);
+  background: none;
+  cursor: pointer;
+  font-family: var(--jn-disp);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--jn-ink);
+  transition:
+    border-color 0.18s linear,
+    color 0.18s linear;
+}
+
+.jn-brew em {
+  font-family: var(--jn-mono);
+  font-size: 10px;
+  font-style: normal;
+  color: var(--jn-dim);
+}
+
+.jn-brew:hover {
+  border-color: var(--jn-blue);
+}
+
+.jn-brew.is-on {
+  border-color: var(--jn-blue);
+  color: var(--jn-blue);
+  background: var(--jn-blue-soft);
+}
+
+.jn-brew.is-on em {
+  color: var(--jn-blue);
+}
+
+.jn-detail-note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--jn-dim);
+}
+
+/* ── SHEET 4 · 분쇄부 ──────────────────────────────────────── */
+.jn-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 32px);
+}
+
+.jn-pair figure,
+.jn-wide {
+  margin: 0;
+}
+
+.jn-pair img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.jn-wide {
+  margin-top: clamp(30px, 4vw, 58px);
+}
+
+.jn-wide img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.jn-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(20px, 3vw, 54px);
+  margin-top: clamp(28px, 3.5vw, 50px);
+  max-width: 104ch;
+}
+
+.jn-cols p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--jn-dim);
+}
+
+.jn-cols b {
+  color: var(--jn-ink);
+  font-weight: 600;
+}
+
+/* ── SHEET 5 · 사양 ────────────────────────────────────────── */
+.jn-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: clamp(20px, 2.6vw, 46px);
+  max-width: 1180px;
+}
+
+.jn-spec-g h3,
+.jn-bom h3 {
+  margin: 0 0 12px;
+  font-family: var(--jn-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jn-blue);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--jn-line);
+}
+
+.jn-spec-g dl {
+  margin: 0;
+}
+
+.jn-spec-g dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--jn-hair);
+}
+
+.jn-spec-g dt {
+  font-size: 13.5px;
+  color: var(--jn-dim);
+  white-space: nowrap;
+}
+
+.jn-spec-g dd {
+  margin: 0;
+  font-family: var(--jn-mono);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.jn-bom {
+  margin-top: clamp(34px, 4vw, 62px);
+  max-width: 1180px;
+}
+
+.jn-bom table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.jn-bom th,
+.jn-bom td {
+  text-align: left;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--jn-hair);
+  font-size: 13.5px;
+}
+
+.jn-bom th {
+  font-family: var(--jn-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--jn-dim);
+  text-transform: uppercase;
+}
+
+.jn-bom td:first-child {
+  font-family: var(--jn-mono);
+  font-size: 12px;
+  color: var(--jn-blue);
+  width: 54px;
+}
+
+.jn-bom td:nth-child(3),
+.jn-bom td:nth-child(4) {
+  font-family: var(--jn-mono);
+  font-size: 11.5px;
+  color: var(--jn-dim);
+  letter-spacing: 0.03em;
+}
+
+/* ── SHEET 6 · 제작 회계 ───────────────────────────────────── */
+.jn-ledger-list {
+  margin: clamp(28px, 3.5vw, 50px) 0 0;
+  max-width: 760px;
+  border-top: 1px solid var(--jn-line);
+}
+
+.jn-ledger-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--jn-hair);
+}
+
+.jn-ledger-list dt {
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+.jn-ledger-list dd {
+  margin: 0;
+  font-family: var(--jn-mono);
+  font-size: 12.5px;
+  color: var(--jn-dim);
+  text-align: right;
+}
+
+.jn-disclaim {
+  margin: clamp(26px, 3vw, 44px) 0 0;
+  max-width: 68ch;
+  font-family: var(--jn-mono);
+  font-size: 11.5px;
+  line-height: 1.85;
+  color: var(--jn-dim);
+}
+
+.jn-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: clamp(28px, 3vw, 46px);
+}
+
+.jn-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 22px;
+  border: 1px solid var(--jn-blue);
+  background: var(--jn-blue);
+  color: #fff;
+  text-decoration: none;
+  font-family: var(--jn-disp);
+  font-size: 16px;
+  font-weight: 500;
+  transition:
+    background 0.2s linear,
+    color 0.2s linear;
+}
+
+.jn-btn-ghost {
+  background: none;
+  color: var(--jn-blue);
+}
+
+.jn-btn-ghost:hover {
+  background: var(--jn-blue-soft);
+}
+
+.jn-btn:hover {
+  background: #143cae;
+  border-color: #143cae;
+}
+
+.jn-btn-ghost:hover {
+  border-color: var(--jn-blue);
+  color: var(--jn-blue);
+}
+
+/* ── 도면 액자 · 표제란 ───────────────────────────────────── */
+.jn-frame {
+  position: fixed;
+  inset: 9px;
+  border: 1px solid var(--jn-line);
+  pointer-events: none;
+  z-index: 25;
+}
+
+.jn-tick {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border: 0 solid var(--jn-blue);
+}
+
+.jn-tick-tl {
+  top: -1px;
+  left: -1px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+
+.jn-tick-tr {
+  top: -1px;
+  right: -1px;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+
+.jn-tick-bl {
+  bottom: -1px;
+  left: -1px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+
+.jn-tick-br {
+  bottom: -1px;
+  right: -1px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
+
+.jn-titleblock {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 26;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  background: color-mix(in srgb, var(--jn-sheet) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--jn-ink);
+  font-family: var(--jn-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+.jn-titleblock > div {
+  padding: 6px 11px;
+  border-right: 1px solid var(--jn-hair);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+}
+
+.jn-titleblock > div:last-child {
+  border-right: 0;
+}
+
+.jn-titleblock span {
+  color: var(--jn-dim);
+  text-transform: uppercase;
+}
+
+.jn-titleblock b {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.jn-tb-a b {
+  color: var(--jn-blue);
+}
+
+/* ── 반응형 ──────────────────────────────────────────────── */
+@media (max-width: 1180px) {
+  .jn-titleblock {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .jn-hero,
+  .jn-detail,
+  .jn-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .jn-hero-fig {
+    order: -1;
+  }
+
+  .jn-hero-fig img {
+    aspect-ratio: 16 / 11;
+  }
+
+  .jn-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .jn-note {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .jn-note-h {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 720px) {
+  .jn-vp {
+    height: clamp(400px, 62vh, 560px);
+  }
+
+  /* 라벨 두 줄이 모델을 다 덮는다. 좁을 땐 선택한 하나만 남긴다. */
+  .jn-label {
+    width: 148px;
+    height: 38px;
+  }
+
+  .jn-lname {
+    font-size: 14px;
+  }
+
+  .jn-frame {
+    display: none;
+  }
+
+  .jn-bom td:nth-child(3) {
+    display: none;
+  }
+
+  .jn-bom th:nth-child(3) {
+    display: none;
+  }
+}
+
+/* ── 저감 모션 ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .jn-rv {
+    transition-duration: 0.01ms;
+    opacity: 1;
+  }
+
+  .jn-rule-line line {
+    transition: none;
+    stroke-dashoffset: 0;
+  }
+
+  .jn-label,
+  .jn-btn,
+  .jn-brew,
+  .jn-vbtn,
+  .jn-play {
+    transition: none;
+  }
+}
+
+/* ── SHEET 3 · 분쇄실 단면 추가분 ─────────────────────────── */
+.jn-d-flow {
+  stroke: var(--jn-blue);
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.jn-d-flow text {
+  fill: var(--jn-blue);
+  stroke: none;
+  font-family: var(--jn-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+/* 나온 분쇄물. 지름은 그 위 틈과 같은 축척으로 그린다. */
+.jn-d-grain circle {
+  fill: #4a3226;
+  opacity: 0.85;
+}
+
+/* 단면 안에 직접 얹는 부품 이름. 해칭 위에서도 읽히도록 배경색 테두리를 두른다. */
+.jn-d-inplace text {
+  fill: var(--jn-ink);
+  font-family: var(--jn-disp);
+  font-size: 17px;
+  font-weight: 600;
+  paint-order: stroke fill;
+  stroke: var(--jn-model);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.jn-d-inplace .jn-d-sub {
+  font-family: var(--jn-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  fill: var(--jn-dim);
+  letter-spacing: 0.06em;
+}
+
+.jn-detail-feel {
+  margin: -4px 0 0;
+  font-family: var(--jn-disp);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--jn-ink);
+}
